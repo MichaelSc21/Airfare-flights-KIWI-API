@@ -1,0 +1,165 @@
+[
+    {
+        "id": "1b7c093e4bdf0000ef7399b0_0|093e25584be000007a37dda7_0|2558231a4be000007c7062e3_0",
+        "flyFrom": "BHX",
+        "flyTo": "IAS",
+        "cityFrom": "Birmingham",
+        "cityCodeFrom": "BHX",
+        "cityTo": "Ia\u0219i",
+        "cityCodeTo": "IAS",
+        "countryFrom": {
+          "code": "GB",
+          "name": "United Kingdom"
+        },
+        "countryTo": {
+          "code": "RO",
+          "name": "Romania"
+        },
+        "nightsInDest": null,
+        "quality": 1111.097579,
+        "distance": 2172.79,
+        "duration": {
+          "departure": 93300,
+          "return": 0,
+          "total": 93300
+        },
+        "price": 208,
+        "conversion": {
+          "EUR": 233.766439,
+          "GBP": 208
+        },
+        "fare": {
+          "adults": 52,
+          "children": 52,
+          "infants": 52
+        },
+        "price_dropdown": {
+          "base_fare": 208,
+          "fees": 0
+        },
+        "bags_price": {
+          "1": 123.75,
+          "2": 247.515
+        },
+        "baglimit": {
+          "hand_height": 40,
+          "hand_length": 55,
+          "hand_weight": 10,
+          "hand_width": 20,
+          "hold_dimensions_sum": 319,
+          "hold_height": 119,
+          "hold_length": 119,
+          "hold_weight": 20,
+          "hold_width": 81,
+          "personal_item_height": 25,
+          "personal_item_length": 40,
+          "personal_item_weight": 10,
+          "personal_item_width": 20
+        },
+        "availability": {
+          "seats": 6
+        },
+        "airlines": [
+          "W6",
+          "FR"
+        ],
+        "route": [
+          {
+            "id": "1b7c093e4bdf0000ef7399b0_0",
+            "combination_id": "1b7c093e4bdf0000ef7399b0",
+            "flyFrom": "BHX",
+            "flyTo": "OPO",
+            "cityFrom": "Birmingham",
+            "cityCodeFrom": "BHX",
+            "cityTo": "Porto",
+            "cityCodeTo": "OPO",
+            "airline": "FR",
+            "flight_no": 8514,
+            "operating_carrier": "",
+            "operating_flight_no": "",
+            "fare_basis": "",
+            "fare_category": "M",
+            "fare_classes": "",
+            "fare_family": "",
+            "return": 0,
+            "bags_recheck_required": false,
+            "vi_connection": false,
+            "guarantee": false,
+            "equipment": null,
+            "vehicle_type": "aircraft",
+            "local_arrival": "2023-03-07T23:05:00.000Z",
+            "utc_arrival": "2023-03-07T23:05:00.000Z",
+            "local_departure": "2023-03-07T20:45:00.000Z",
+            "utc_departure": "2023-03-07T20:45:00.000Z"
+          },
+          {
+            "id": "093e25584be000007a37dda7_0",
+            "combination_id": "093e25584be000007a37dda7",
+            "flyFrom": "OPO",
+            "flyTo": "BGY",
+            "cityFrom": "Porto",
+            "cityCodeFrom": "OPO",
+            "cityTo": "Milan",
+            "cityCodeTo": "MIL",
+            "airline": "FR",
+            "flight_no": 4703,
+            "operating_carrier": "",
+            "operating_flight_no": "",
+            "fare_basis": "",
+            "fare_category": "M",
+            "fare_classes": "",
+            "fare_family": "",
+            "return": 0,
+            "bags_recheck_required": true,
+            "vi_connection": true,
+            "guarantee": true,
+            "equipment": null,
+            "vehicle_type": "aircraft",
+            "local_arrival": "2023-03-08T15:15:00.000Z",
+            "utc_arrival": "2023-03-08T14:15:00.000Z",
+            "local_departure": "2023-03-08T11:40:00.000Z",
+            "utc_departure": "2023-03-08T11:40:00.000Z"
+          },
+          {
+            "id": "2558231a4be000007c7062e3_0",
+            "combination_id": "2558231a4be000007c7062e3",
+            "flyFrom": "BGY",
+            "flyTo": "IAS",
+            "cityFrom": "Milan",
+            "cityCodeFrom": "MIL",
+            "cityTo": "Ia\u0219i",
+            "cityCodeTo": "IAS",
+            "airline": "W6",
+            "flight_no": 3672,
+            "operating_carrier": "",
+            "operating_flight_no": "",
+            "fare_basis": "PRREG",
+            "fare_category": "M",
+            "fare_classes": "P",
+            "fare_family": "",
+            "return": 0,
+            "bags_recheck_required": true,
+            "vi_connection": true,
+            "guarantee": true,
+            "equipment": null,
+            "vehicle_type": "aircraft",
+            "local_arrival": "2023-03-09T00:40:00.000Z",
+            "utc_arrival": "2023-03-08T22:40:00.000Z",
+            "local_departure": "2023-03-08T21:20:00.000Z",
+            "utc_departure": "2023-03-08T20:20:00.000Z"
+          }
+        ],
+        "booking_token": "E-VzQeMmHRhHJZMIj6k91vWdNNOJ5O-nYM4ifybbLQeUaOkNxFWhJz3Dj62TxVB0XLgYWCV8eAG56hFgWIsAyC3Zu6yFChJYIyrCUr5C2uQM57T4tU7J0c0H8reWzo4bjoxYrYn0NxhZF06zay620BjTQx7zkyapFBvHBGT4W-WtXSd_LxBD10OmooxRqCQx2YM7ka0kdlZ14nF-YtcwGtpSra9K_Bd6ck1fY0N6XsNe8Z7nZgakdKHHPrRAIRJSl9kUTXBU4aSqz0q16xtO63jc7roOROJhP30EFD84bndP_R3zJVeCb_vg_fwe_0BAKCes4gEFLcK3ioFWJBVMkqARxP-c9uth1OiIvdufLH04OLjgdYfHwMUDwfd8QIXEK3-_nA-gvwzASYZXqNZz8nQ7o-Mamd1bGjl7pYRtnovs7POeekZQ_ztDyWyhJ34BkhXYK2tOgzu1BWIJIn6x7gy1GUY2MNlUKwWNkSBoDFam3AiPKZCaYLvAm94cQxX3xgrp36uK0FxZebOnQiiXgWnOh1PNwS5Q0k_FnMu4G2YrR6EZ3MmID5HwKjazfBrxYpHpUbLp9hrbvUEk6vEZ3Id0D53K43oim1-wUjv8KV3-ETEOdi2sGUTAf6TYKFG_rde22Nof5IdNUCcq2mIDyUcQ2-b-nx6opZyDih78lmp1XULvS_8E_7PReHDRtDIyczqxTR0N1JGYRTF4t_Zz3FBf5x9t75J0wW-hg0Q51d66uwdFCZSlryqePSvaPg_sxDY_nWo676CYJipiZj6cn5p6V7qdJWeH7Nk3pfyKBW9o=",
+        "facilitated_booking_available": false,
+        "pnr_count": 3,
+        "has_airport_change": false,
+        "technical_stops": 0,
+        "throw_away_ticketing": false,
+        "hidden_city_ticketing": false,
+        "virtual_interlining": true,
+        "local_arrival": "2023-03-09T00:40:00.000Z",
+        "utc_arrival": "2023-03-08T22:40:00.000Z",
+        "local_departure": "2023-03-07T20:45:00.000Z",
+        "utc_departure": "2023-03-07T20:45:00.000Z"
+      }
+]
