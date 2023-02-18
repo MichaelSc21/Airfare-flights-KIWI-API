@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import concurrent.futures
 import API_details
+import time
 
 # %%
 def get_data(payload):
@@ -22,7 +23,6 @@ def get_data(payload):
 
     return response.text
 
- # %%
 def get_duration(row):
     return row['total'] / 3600
 
@@ -93,8 +93,6 @@ def rotate_date(payload, month=None, dayResume = 1, period=40):
         
         data = get_data(payload)
         data = sanitise_data(data)
-        count=1
-        #write_data(data)
 
         month_dict[payload['date_from']] = data
     return month_dict, day+1
@@ -102,32 +100,28 @@ def rotate_date(payload, month=None, dayResume = 1, period=40):
 
 
 
-def using_threads(self,max_workers = 3, period=11, loop_over=3):
-    with concurrent.futures.ThreadPoolExecutor(max_workers) as executor:
-        self.dayResume = 1
+def using_threads(payload=None, max_workers = 3, period=11, loop_over=3, months=None, filename=None):
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        dayResume = 1
         
         for _ in range(loop_over):
-            print(f"The dayResume is: {self.dayResume}")
+            print(f"The dayResume is: {dayResume}")
             print("""
         
         
             """)
             worker_list = []
-            class_list = []
-            for month in range(len(self.months)):
-                #creating instances of a class
-                class_list.append(each_month(self.ACCESS_TOKEN))
-                #using the methods of the instances of the class
-                worker_list.append(executor.submit(class_list[month].
-                rotate_date, origin=self.origin, destination=self.destination, month=self.months[month],dayResume=self.dayResume, period = period))
+            for month in months:
+                worker_list.append(executor.submit(rotate_date,  payload =payload, month=month,dayResume=dayResume, period = period))
                 time.sleep(0.5)
 
         
             for future in concurrent.futures.as_completed(worker_list):
-                # this is for days 1-11
-                month_dict, self.dayResume = future.result()
-                self.write_data_in_chunks(data=month_dict)
+                
+                month_dict,dayResume = future.result()
+                write_data_in_chunks(month_dict=month_dict, filename = filename)
     
+
 
 
 
@@ -142,13 +136,11 @@ if __name__ == '__main__':
     'adults': '4',
     'curr': 'GBP'}
 
-    month_dict, day = rotate_date(payload=payload,month=3, dayResume=1, period=4)
-    write_data_in_chunks(month_dict, 'file1.json')
+    """month_dict, day = rotate_date(payload=payload,month=3, dayResume=1, period=7)
+    write_data_in_chunks(month_dict, 'file1.json')"""
+    filename = 'file1.json'
+    using_threads(payload = payload, max_workers = 6, period = 11, months=[3, 4, 5], filename=filename)
 
 
 
-# %%
-sys.getsizeof(month_dict, bytes=8)
-# %%
-month_dict
 # %%
