@@ -206,15 +206,9 @@ if __name__ == '__main__':
     'curr': 'GBP',
     'sort':'date'}
 
-    """month_dict, day = rotate_date(payload=payload,month=3, dayResume=1, period=7)
-    write_data_in_chunks(month_dict, 'file1.json')"""
-    filename = 'file1.json'
+    filename = payload['fly_from']+'_to_'+ payload['fly_to']
     using_threads(payload = payload, max_workers = 2, period = 15, months=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12], filename=filename)
     
-    """data =get_data(payload)
-    data = sanitise_data(data)
-    print(type(data))
-    write_data(data)"""
 
 
 
