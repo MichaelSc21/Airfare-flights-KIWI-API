@@ -30,8 +30,7 @@ def sort_by_date(df):
     df2 = pd.DataFrame(index=df.index.unique(), columns=['price'])
 
     for i in df.index.unique():
-        print(df.loc[i, 'price'])
-        df2.loc[i] = df.loc[i, 'price'].quantile(q=0.25)
+        df2.loc[i] = pd.Series(df.loc[i, 'price']).quantile(q=0.15)
     return df2
 
 
@@ -68,12 +67,13 @@ def plot(df,):
 
 
 # %%
-df = create_df('BHX_to_IAS.json')
-df = filter_data(df)
-df2 = sort_by_date(df)
-df
+BHX_to_IAS = create_df('BHX_to_IAS.json')
+BHX_to_IAS = filter_data(BHX_to_IAS)
+BHX_to_IAS2 = sort_by_date(BHX_to_IAS)
+BHX_to_IAS
 
-plot(df2)
+plot(BHX_to_IAS2)
+hist(df, 1000)
 
 
 
