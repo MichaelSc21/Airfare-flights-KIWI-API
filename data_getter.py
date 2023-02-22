@@ -196,7 +196,7 @@ def using_threads(payload=None, max_workers = 3, period=4, loop_over=3, months=N
 if __name__ == '__main__':
     #Note: Date is in the format: DD/MM/YYYY
     payload={
-    'fly_from': 'BHX',
+    'fly_from': 'MAN',
     'fly_to': 'IAS',
     'date_from': '01%2F04%2F2023',
     'date_to': '16%2F04%2F2023',
@@ -206,7 +206,7 @@ if __name__ == '__main__':
     'curr': 'GBP',
     'sort':'date'}
 
-    filename = payload['fly_from']+'_to_'+ payload['fly_to']
+    filename = payload['fly_from']+'_to_'+ payload['fly_to'] + ".json"
     using_threads(payload = payload, max_workers = 2, period = 15, months=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12], filename=filename)
     
 
