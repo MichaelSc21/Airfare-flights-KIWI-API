@@ -8,50 +8,52 @@ from scipy.optimize import curve_fit, leastsq
 
 # %%
 
-class create_big_df(pd.DataFrame):
+class create_big_df():
     def __init__(self, filename): 
         self.filename = filename
-        super().__init__(pd.read_json(self.filename))
-        print(type(self))
+        self.df = pd.read_json(self.filename)
+        print(type(self.df))
 
     def filter_data(self):    
-        mean = self['price'].mean()
-        std = self['price'].std()
+        mean = self.df['price'].mean()
+        std = self.df['price'].std()
         lower_range = mean - 2*std
         upper_range = mean + 2*std
-        mask = (self['price'] >= lower_range) & (self['price'] <= upper_range)
-        print(len(self['price']))
-        self = self.loc[mask]
-        print(len(self['price']))
+        mask = (self.df['price'] >= lower_range) & (self.df['price'] <= upper_range)
+        print(len(self.df['price']))
+        self.df = self.df.loc[mask]
+        print(len(self.df['price']))
 
-        self['departure'] = pd.to_datetime(self['departure'].str[:10])
+        self.df['departure'] = pd.to_datetime(self.df['departure'].str[:10])
 
-        self.index = self['departure']
+        self.df.index = self.df['departure']
     
     def create_small_df(self, method, quantile=None, ):
-        return create_small_df(self,method, quantile, self.filename)
+        self.method = method
+        self.quantile = quantile
+        return create_small_df(self.df,self.method, self.quantile, self.filename)
     
-class create_small_df(pd.DataFrame):
+class create_small_df():
     def __init__(self, big_df, method, quantile, filename):
-        super().__init__(pd.DataFrame(index=big_df.index.unique(), columns=['price']))
+        self.df = pd.DataFrame(index=big_df.index.unique(), columns=['price'])
         
         if method == 'mean':
             for i in big_df.index.unique():
-                self.loc[i] = pd.Series(big_df.loc[i, 'price']).mean()
+                self.df.loc[i] = pd.Series(big_df.loc[i, 'price']).mean()
         elif method == 'min':
             for i in big_df.index.unique():
-                self.loc[i] = pd.Series(big_df.loc[i, 'price']).min()
+                self.df.loc[i] = pd.Series(big_df.loc[i, 'price']).min()
         elif method == 'quantile':
             if quantile == None:
                 raise TypeError("The method selected is quantile which means you also need to pass a value for the quantile")
             else: 
                 for i in big_df.index.unique():
-                    self.loc[i] = pd.Series(big_df.loc[i, 'price']).quantile(q=quantile)
+                    self.df.loc[i] = pd.Series(big_df.loc[i, 'price']).quantile(q=quantile)
         else:
             raise TypeError("Invalid method selected")
         
-        self.y = self['price']
-        self.x = self.index
+        self.y = self.df['price']
+        self.x = self.df.index
         self.x_line = np.array(self.x.astype(int) / 10**9)
         # Finding the amplitude of the sin waves
         self.amp = abs(np.fft.fft(self.y))
@@ -66,7 +68,7 @@ class create_small_df(pd.DataFrame):
         self.guess = [self.guess_amp, 2*np.pi*self.guess_freq, self.phase,  self.guess_offset]
         self.filename = filename
 
-    def sinfunc(x, a, w, p):
+    def sinfunc(self,x, a, w, p):
         return a * np.sin(x*w+p)
     
     def est_param(self):
@@ -82,7 +84,7 @@ class create_small_df(pd.DataFrame):
         self.est_values = [self.est_amps, self.est_freq, self.est_phase]
 
     def model_based_on_param(self,degree):
-        self.x_line_dense = np.linspace(self.x_line.min(), self.x_line.max(), 4*len(self.x_line))
+        self.x_line_dense = np.linspace(self.x_line.min(), self.x_line.max(), 2*len(self.x_line))
         self.x_dense = pd.to_datetime(self.x_line_dense, unit='s')
         self.y_dense = np.zeros(shape=len(self.x_line_dense))
 
@@ -91,12 +93,25 @@ class create_small_df(pd.DataFrame):
             self.y_dense += self.sinfunc(self.x_line_dense, self.est_values[0][i], self.est_values[1][i],self.est_values[2][i]) 
 
     def plot_graph_fourier(self, ax, a=1, b=0, colour='blue'):
-    
-        ax.plot(self.x_line,self.y_line*a+b, label = df_name, color = colour)
+        ax.plot(self.x_dense,self.y_dense*a+b, label = df_name, color = colour)
         ax.scatter(self.x, self.y, color = colour, marker='.',label = self.filename)
-        
         ax.legend(fontsize=12)
         ax.set_title('Price of flights in the bottom 15% for 4 adults')
+
+
+    def plot_polynomial(self,degree,  ax, colour):
+        y = self.y.astype(int)
+        p= np.polyfit(self.x_line, y, degree)
+        self.y_line = np.polyval(p,self.x_line_dense)
+        ax.plot(self.x_dense, self.y_line, label=self.filename, color=colour)
+
+        ax.set_ylabel('Price in GBP')
+        #ax.set_yticks(np.arange(0, np.max(y)+1, 100))
+        ax.set_xlabel('Date')
+        ax.set_title('The price of a Oneway flight on each of the day of the year for 4 adults( adult > 12y/o)')
+        ax.scatter(self.x, self.y, marker ='.', color=colour, label=self.filename)
+        ax.legend(fontsize=12)
+
 
 
 
@@ -113,9 +128,9 @@ for df_name in df_names:
     dict_df[df_name].filter_data()
     small_df[df_name] = dict_df[df_name].create_small_df(method = 'quantile', quantile = 0.1)
     small_df[df_name].est_param()
-    small_df[df_name].model_based_on_param(8)
+    small_df[df_name].model_based_on_param(12)
     fig, ax = plt.subplots(figsize = (12, 6))
-    small_df[df_name].plot_graph_fourrier(ax, a= 0.5, b = 0, colour = 'red')
+    #small_df[df_name].plot_graph_fourier(ax, a= 1, b = -3000, colour = 'red')
+    small_df[df_name].plot_polynomial(degree = 20, ax=ax, colour='red')
 
 
-# %%
