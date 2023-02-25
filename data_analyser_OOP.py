@@ -67,6 +67,11 @@ class create_small_df():
         self.guess_offset = np.mean(self.y) * 2**0.5
         self.guess = [self.guess_amp, 2*np.pi*self.guess_freq, self.phase,  self.guess_offset]
         self.filename = filename
+        
+        self.x_line_dense = np.linspace(self.x_line.min(), self.x_line.max(), 2*len(self.x_line))
+        self.x_dense = pd.to_datetime(self.x_line_dense, unit='s')
+        self.y_dense = np.zeros(shape=len(self.x_line_dense))
+
 
     def sinfunc(self,x, a, w, p):
         return a * np.sin(x*w+p)
@@ -84,10 +89,7 @@ class create_small_df():
         self.est_values = [self.est_amps, self.est_freq, self.est_phase]
 
     def model_based_on_param(self,degree):
-        self.x_line_dense = np.linspace(self.x_line.min(), self.x_line.max(), 2*len(self.x_line))
-        self.x_dense = pd.to_datetime(self.x_line_dense, unit='s')
-        self.y_dense = np.zeros(shape=len(self.x_line_dense))
-
+        
         ind = np.argpartition(self.est_values[0], -degree)[-degree:]
         for i in ind:
             self.y_dense += self.sinfunc(self.x_line_dense, self.est_values[0][i], self.est_values[1][i],self.est_values[2][i]) 
@@ -127,10 +129,9 @@ for df_name in df_names:
     print(type(dict_df[df_name]))
     dict_df[df_name].filter_data()
     small_df[df_name] = dict_df[df_name].create_small_df(method = 'quantile', quantile = 0.1)
-    small_df[df_name].est_param()
-    small_df[df_name].model_based_on_param(12)
     fig, ax = plt.subplots(figsize = (12, 6))
-    #small_df[df_name].plot_graph_fourier(ax, a= 1, b = -3000, colour = 'red')
     small_df[df_name].plot_polynomial(degree = 20, ax=ax, colour='red')
 
 
+
+# %%
