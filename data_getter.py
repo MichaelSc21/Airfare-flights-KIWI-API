@@ -11,11 +11,14 @@ import time
 # %%
 def get_data(payload):
 
-    url= f"https://api.tequila.kiwi.com/v2/search?fly_from={payload['fly_from']}&fly_to={payload['fly_to']}&date_from={payload['date_from']}&date_to={payload['date_to']}&flight_type={payload['flight_type']}&adults={payload['adults']}&children=0&curr={payload['curr']}&vehicle_type=aircraft&limit=1000&sort={payload['sort']}"
+    url  = "https://api.tequila.kiwi.com/v2/search?"
+    for key, value in payload.items():
+        url += str(key) + '=' + str(value) + '&'
+    url = url[:-1]
+    print(url)
+    #url= f"https://api.tequila.kiwi.com/v2/search?fly_from={payload['fly_from']}&fly_to={payload['fly_to']}&date_from={payload['date_from']}&date_to={payload['date_to']}&flight_type={payload['flight_type']}&adults={payload['adults']}&children=0&curr={payload['curr']}&vehicle_type=aircraft&limit=1000&sort={payload['sort']}"
 
-
-
-
+    print(url)
     headers = {
     'apikey': API_details.API_KEY,
     'accept': 'application/json',
@@ -200,14 +203,13 @@ if __name__ == '__main__':
     'fly_to': 'IAS',
     'date_from': '01%2F04%2F2023',
     'date_to': '16%2F04%2F2023',
-    'return_from': '10/04/2023',
     'flight_type': 'oneway',
     'adults': '4',
     'curr': 'GBP',
     'sort':'date'}
 
     filename = payload['fly_from']+'_to_'+ payload['fly_to'] + ".json"
-    using_threads(payload = payload, max_workers = 2, period = 15, months=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12], filename=filename)
+    using_threads(payload = payload, max_workers = 2, period = 15, months=[3,4,5,6,7,8,9,10,11,12], filename=filename)
     
 
 
