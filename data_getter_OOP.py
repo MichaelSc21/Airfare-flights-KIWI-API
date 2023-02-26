@@ -11,13 +11,14 @@ import time
 
 
 class Data_getter():
-    def __init__(self, payload):
+    def __init__(self, payload, sanitise_data=False):
         self.payload = payload
         if payload['flight_type'] == 'oneway':
             self.oneway = True
             self.round = False
 
-        self.filename = self.payload['fly_from'] + '_to_' + self.payload['fly_to'] + '.json'
+        self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}.json"
+        self.sanitise = sanitise_data
 
     def get_data(self):
         url  = "https://api.tequila.kiwi.com/v2/search?"
@@ -33,15 +34,26 @@ class Data_getter():
         }
 
         response = requests.request("GET", url,headers=headers)
-
         return response.text
     
     @staticmethod
-    def get_duration(row):
-        return row['total'] / 3600
+    def get_duration_departure(row):
+        return row['departure'] / 3600
+    
     @staticmethod
-    def get_departure(row):
-        return row[0]['utc_arrival']
+    def get_duration_return(row):
+        return row['return'] / 3600
+    
+    def get_departure_date(self, row):
+        for i in row:
+            if i['flyTo'] == self.payload['fly_to']:
+                return i['utc_arrival']
+
+    def get_return_date(self, row):
+        for i in row:
+            if i['flyTo'] == self.payload['fly_from']:
+                return i['utc_arrival']
+    
     @staticmethod
     def get_availability(row):
         return row['seats']
@@ -55,12 +67,15 @@ class Data_getter():
             print(err)
             print(data)
 
-        usecols = ['id', 'quality', 'price', 'airlines', 'duration', 'routecount', 'departure', 'seats_available']
+        usecols = ['id', 'quality', 'price', 'airlines', 'duration_departure','duration_return', 'routecount', 'departure_date', 'return_date', 'seats_available']
 
         df = pd.DataFrame.from_dict(data)
-        df['duration'] = df['duration'].apply(lambda row: self.get_duration(row))
+        df['duration_departure'] = df['duration'].apply(lambda row: self.get_duration_departure(row))
+        df['duration_return'] = df['duration'].apply(lambda row: self.get_duration_return(row))
         df['routecount'] = df['route'].apply(lambda row: len(row))
-        df['departure'] = df['route'].apply(lambda row: self.get_departure(row))
+        df['departure_date'] = df['route'].apply(lambda row: self.get_departure_date(row))
+        df['return_date'] = df['route'].apply(lambda row: self.get_return_date(row))
+
         df['seats_available'] = df['availability'].apply(lambda row: self.get_availability(row))
 
         for col in df.columns:
@@ -73,6 +88,12 @@ class Data_getter():
         
         return json_string
     
+    def write_data(self, data):
+        data= json.loads(data)
+        #data = data['data']
+        with open(self.filename, 'w') as f:
+            json.dump(data, f, indent=2)
+
     def write_data_in_chunks(self, month_dict):
         try: 
             with open(self.filename, 'r') as f:
@@ -126,7 +147,8 @@ class Data_getter():
         self.payload['date_from'] = f'{stringDayResume}/{stringMonth}/2023'
         self.payload['date_to'] = f'{stringDayEnd}/{stringMonth}/2023'
         month_dict = self.get_data()
-        month_dict = self.sanitise_data(month_dict)
+        if self.sanitise == True:
+            month_dict = self.sanitise_data(month_dict)
 
         
         return month_dict, dayEnd+1
@@ -162,16 +184,23 @@ class Data_getter():
 if __name__ == '__main__':
     #Note: Date is in the format: DD/MM/YYYY
     payload={
-    'fly_from': 'MAN',
+    'fly_from': 'LTN',
     'fly_to': 'IAS',
     'date_from': '01%2F04%2F2023',
-    'date_to': '16%2F04%2F2023',
-    'flight_type': 'oneway',
+    'date_to': '15%2F04%2F2023',
+    'return_from': '08%2F04%2F2023',
+    'return_to': '22%2F04%2F2023',
+    'nights_in_dst_from': 7,
+    'nights_in_dst_to': 7,
+    'flight_type': 'round',
     'adults': '4',
     'curr': 'GBP',
-    'sort':'date'}
+    'sort':'date',
+    'selected_cabins': 'M'}
     
-    BHX_to_IAS = Data_getter(payload)
-    BHX_to_IAS.using_threads(max_workers = 2, period = 15, months=[3, 4, 5, 6 ,7, 8, 9, 10 , 11, 12])
+    LTN_to_IAS_round = Data_getter(payload, sanitise_data = True)
+    data = LTN_to_IAS_round.get_data()
+    data = LTN_to_IAS_round.sanitise_data(data)
+    LTN_to_IAS_round.write_data(data)
 
 # %%
