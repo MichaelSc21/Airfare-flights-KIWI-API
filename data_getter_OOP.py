@@ -160,11 +160,7 @@ class Data_getter():
         else:
             self.payload['date_from'] = f'{stringDayResume}/{stringMonth}/2023'
             self.payload['date_to'] = f'{stringDayEnd}/{stringMonth}/2023'
-            
-            self.payload['date_from'] = f'{stringDayResume}/{stringMonth}/2023'
-            self.payload['date_to'] = f'{stringDayEnd}/{stringMonth}/2023'
 
-            
             month_dict = self.get_data()
             if self.sanitise == True:
                 month_dict = self.sanitise_data(month_dict)
@@ -200,35 +196,109 @@ class Data_getter():
                         self.write_data_in_chunks(month_dict=month_dict)
 
     def return_dates(self, dateEnd, period):
+        if self.payload['flight_type'] == 'oneway':
+            dates = [self.payload['date_from'], self.payload['date_to']]
+        elif self.payload['flight_type'] == 'round':
+            dates = [self.payload['date_from'], self.payload['date_to'], self.payload['return_from'], self.payload['return_to']]
+
         self.listDates = []
         dateEnd = pd.to_datetime(dateEnd,format="%d/%m/%Y")
-        dates = [self.payload['date_from'], self.payload['date_to'], self.payload['return_from'], self.payload['return_to']]
-
+        
+        # Converts dates into pd.datetime
         for date in range(len(dates)):
             dates[date] = pd.to_datetime(dates[date],format="%d/%m/%Y")
-        self.listDates.append([date.strftime('%d/%m/%Y') for date in dates])
 
+        # Loops over the dates until it gets to the dateEnd and adds them to self.listDates in the format dd/mm/YYYY
         while dates[0] <= dateEnd:
-            dates[0] = dates[0] + pd.Timedelta(days=period)
-            dates[1] = dates[1] + pd.Timedelta(days=period)
-            dates[2] = dates[2] + pd.Timedelta(days=period)
-            dates[2] = dates[2] + pd.Timedelta(days=period)
-
             self.listDates.append([date.strftime('%d/%m/%Y') for date in dates])
+            for date in range(len(dates)):
+                dates[date] = dates[date] + pd.Timedelta(days = period)
 
-        print(self.listDates)
+    def rotate_date_kiwi2(self, date):
 
-    def using_thread2(self, max_workers, dateEnd='31/12/2023', period=15):
+        if self.payload['flight_type'] == 'oneway':
+            self.payload['date_from'], self.payload['date_to'] = date
+            temp_dict = self.get_data()
+            if self.sanitise == True:
+                temp_dict = self.sanitise_data(temp_dict)
 
+        elif self.payload['flight_type'] == 'round':
+            self.payload['date_from'], self.payload['date_to'], self.payload['return_from'],self.payload['return_to'] = date
+            temp_dict = self.get_data()
+            if self.sanitise == True:
+                temp_dict = self.sanitise_data(temp_dict)
+
+
+        
+        return temp_dict
+
+    # this method is only to be for round flights as of 2/3/2023
+    def using_threads2(self, max_workers, dateEnd='31/12/2023', period=15):
         self.return_dates(dateEnd, period)
+        looping_over = int(len(self.listDates)/max_workers) + (len(self.listDates)%max_workers>0)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            worker_list = []
-            dates_index=[i for i in range(max_workers)]
-            for date in self.listDates:
+            print(max_workers)
+            for i in range(looping_over):
+                worker_list = []
+                worker_count =0
+                for date in self.listDates:
+                    if worker_count<2*max_workers:
+                        worker_count += 1
+                        worker_list.append(executor.submit(self.rotate_date_kiwi2, date=date))
+                        print('worker is given work')
+                        time.sleep(0.5)
+                print("Workers have been stopped from being given work")
+                print("""
+                
+                
+                """)
 
-                worker_list.append(executor.submit(self.rotate_date_kiwi,  payload =payload, dates=dates))
+
+                for future in concurrent.futures.as_completed(worker_list):
+                    temp_dict= future.result()
+                if temp_dict == None:
+                    pass
+                else:
+                    self.write_data_in_chunks(month_dict=temp_dict)
+                print(f"Completed these dates: {self.listDates[i]}")
         
+
+# %% 
+if __name__ == '__main__':
+    #Note: Date is in the format: DD/MM/YYYY
+    payload={
+    'fly_from': 'LTN',
+    'fly_to': 'IAS',
+    'date_from': '01/04/2023',
+    'date_to': '16/04/2023',
+    'return_from': '17/04/2023',
+    'return_to': '01/05/2023',
+    'nights_in_dst_from': 7,
+    'nights_in_dst_to': 7,
+    'flight_type': 'round',
+    'adults': '4',
+    'curr': 'GBP',
+    'sort':'date',
+    'selected_cabins': 'M'}
+
+    payload2= {
+    'fly_from': 'LTN',
+    'fly_to': 'IAS',
+    'date_from': '01/04/2023',
+    'date_to': '16/04/2023',
+    'flight_type': 'oneway',
+    'adults': '4',
+    'curr': 'GBP',
+    'sort':'date',
+    'selected_cabins': 'M'}
+
+    LTN_to_IAS_round = Data_getter(payload2, sanitise_data = True)
+
+    LTN_to_IAS_round.using_threads2(dateEnd = '31/12/2023', max_workers=2, period = 15)
+
+
+
 # %%
 if __name__ == '__main__':
     #Note: Date is in the format: DD/MM/YYYY
@@ -241,7 +311,7 @@ if __name__ == '__main__':
     'return_to': '01/05/2023',
     'nights_in_dst_from': 7,
     'nights_in_dst_to': 7,
-    'flight_type': 'oneway',
+    'flight_type': 'round',
     'adults': '4',
     'curr': 'GBP',
     'sort':'date',
@@ -320,6 +390,42 @@ def iterate(payload, dateStart, dateEnd, period):
         
         """)
 
-
 iterate(payload, dateStart, dateEnd, period)
+# %%
+dateStart = "04/04/2023"
+dateEnd = "31/12/2023"
+period = 15
+
+payload={
+    'fly_from': 'LTN',
+    'fly_to': 'IAS',
+    'date_from': '01/04/2023',
+    'date_to': '16/04/2023',
+    'return_from': '17/04/2023',
+    'return_to': '01/05/2023',
+    'nights_in_dst_from': 7,
+    'nights_in_dst_to': 7,
+    'flight_type': 'oneway',
+    'adults': '4',
+    'curr': 'GBP',
+    'sort':'date',
+    'selected_cabins': 'M'}
+def return_dates(payload, dateEnd, period):
+    listDates = []
+    dateEnd = pd.to_datetime(dateEnd,format="%d/%m/%Y")
+    dates = [payload['date_from'], payload['date_to'], payload['return_from'], payload['return_to']]
+    # Converts dates into pd.datetime
+    for date in range(len(dates)):
+        dates[date] = pd.to_datetime(dates[date],format="%d/%m/%Y")
+
+    # Loops over the dates until it gets to the dateEnd and adds them to self.listDates in the format dd/mm/YYYY
+    while dates[0] <= dateEnd:
+
+        listDates.append([date.strftime('%d/%m/%Y') for date in dates])
+        for date in range(len(dates)):
+            dates[date] = dates[date] + pd.Timedelta(days = period)
+
+    print(listDates)
+
+return_dates(payload, dateEnd, period)
 # %%
