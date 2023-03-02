@@ -12,6 +12,7 @@ class create_big_df():
     def __init__(self, filename): 
         self.filename = filename
         self.df = pd.read_json(self.filename)
+
         print(type(self.df))
 
     def filter_data(self):    
@@ -24,9 +25,9 @@ class create_big_df():
         self.df = self.df.loc[mask]
         print(len(self.df['price']))
 
-        self.df['departure'] = pd.to_datetime(self.df['departure'].str[:10])
+        self.df['departure_date'] = pd.to_datetime(self.df['departure_date'].str[:10])
 
-        self.df.index = self.df['departure']
+        self.df.index = self.df['departure_date']
     
     def create_small_df(self, method, quantile=None, ):
         self.method = method
@@ -120,14 +121,15 @@ class create_small_df():
 
 
 # %%
-df_names = ['BHX_to_IAS','MAN_to_IAS']
+df_names = ['LTN_to_IAS_round']
 dict_df = {}
 small_df = {}
 for df_name in df_names:
     
-    dict_df[df_name] = create_big_df(df_name+'.json')
-    print(type(dict_df[df_name]))
+    dict_df[df_name] = create_big_df(filename = df_name+'.json')
+
     dict_df[df_name].filter_data()
+    temp_df = dict_df[df_name].df
     small_df[df_name] = dict_df[df_name].create_small_df(method = 'quantile', quantile = 0.1)
     fig, ax = plt.subplots(figsize = (12, 6))
     small_df[df_name].plot_polynomial(degree = 20, ax=ax, colour='red')
