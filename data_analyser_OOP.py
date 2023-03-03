@@ -121,7 +121,7 @@ class create_small_df():
 
 
 # %%
-df_names = ['LTN_to_IAS_round']
+df_names = ['LTN_to_IAS_oneway']
 dict_df = {}
 small_df = {}
 for df_name in df_names:
@@ -132,8 +132,18 @@ for df_name in df_names:
     temp_df = dict_df[df_name].df
     small_df[df_name] = dict_df[df_name].create_small_df(method = 'quantile', quantile = 0.1)
     fig, ax = plt.subplots(figsize = (12, 6))
-    small_df[df_name].plot_polynomial(degree = 20, ax=ax, colour='red')
-
+    #small_df[df_name].plot_polynomial(degree = 20, ax=ax, colour='red')
+    small_df[df_name].est_param()
+    small_df[df_name].model_based_on_param(10)
+    small_df[df_name].plot_graph_fourier(ax=ax, a= 1, b = -2700)
 
 
 # %%
+"""
+TO DO as of 2/3/2023:
+Sort out the fourier curve fitting
+
+
+"""
+
+
