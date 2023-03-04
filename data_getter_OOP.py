@@ -154,25 +154,24 @@ class Data_getter():
         return temp_dict
 
     # this method is only to be for round flights as of 2/3/2023
-    def using_threads2(self, max_workers, dateEnd='31/12/2023', period=15, max_amm_times_for_file = 1):
+    def using_threads2(self, max_workers, dateEnd='31/12/2023', period=15, max = 1):
         self.return_dates(dateEnd, period)
         print(len(self.listDates))
         count = 1
-
-
-        looping_over = int(len(self.listDates)/max_workers) + (len(self.listDates)%max_workers>0)
-
+        looping_over = int(len(self.listDates)/max) + (len(self.listDates)%max_workers>0)
+        worker_count =0
+        
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             print(max_workers)
             for i in range(looping_over):
                 worker_list = []
-                worker_count =0
+
                 for date in self.listDates:
-                    if worker_count<1*max_workers:
+                    # The variable max makes sure that only a certain number of API calls can be done before the dictionaries with data have to be written to a file 
+                    if worker_count<max*max_workers:
                         worker_count += 1
                         worker_list.append(executor.submit(self.middle_man, date=date))
                         time.sleep(0.5)
-
 
                 for future in concurrent.futures.as_completed(worker_list):
                     temp_dict= future.result()
@@ -181,6 +180,7 @@ class Data_getter():
                 else:
                     self.write_data_in_chunks(month_dict=temp_dict)
                 print(f"Completed these dates: {self.listDates[i]}")
+                print(f"Completed these dates: {date}")
                 print(f"We have written to the file {count} times")
                 count += 1
         
