@@ -87,11 +87,7 @@ class Data_getter():
         for col in df.columns:
             if col not in usecols:
                 df.drop(col, axis=1, inplace=True)
-        df
         json_string = df.to_json(orient='records')
-
-        #json_string = json.loads(json_string)
-        
         return json_string
     
     def write_data(self, data):
@@ -120,81 +116,6 @@ class Data_getter():
 
 
 
-    def rotate_date_kiwi(self, payload, month=None, dayResume = 1, period=40):
-        months_list = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        month_dict=[]
-        if month < 10:
-            stringMonth = '0'+str(month)
-        else:
-            stringMonth = month
-
-        dayEnd = dayResume + period
-        if dayResume > months_list[month-1]:
-            return None, None
-        if dayEnd > months_list[month-1]:
-            dayEnd =months_list[month-1]
-
-        if dayResume< 10:
-            stringDayResume = '0'+str(dayResume)
-        else:
-            stringDayResume = dayResume
-        if dayEnd < 10:
-            stringDayEnd = '0'+str(dayEnd)
-        else:
-            stringDayEnd = dayEnd
-
-        print(f"The day start is: {stringDayResume}/{stringMonth}/2023")
-        print(f"The day end is: {stringDayEnd}/{stringMonth}/2023")
-        print("""
-        
-        
-        """)
-        if self.round == False:
-            self.payload['date_from'] = f'{stringDayResume}/{stringMonth}/2023'
-            self.payload['date_to'] = f'{stringDayEnd}/{stringMonth}/2023'
-            month_dict = self.get_data()
-            if self.sanitise == True:
-                month_dict = self.sanitise_data(month_dict)
-
-
-        else:
-            self.payload['date_from'] = f'{stringDayResume}/{stringMonth}/2023'
-            self.payload['date_to'] = f'{stringDayEnd}/{stringMonth}/2023'
-
-            month_dict = self.get_data()
-            if self.sanitise == True:
-                month_dict = self.sanitise_data(month_dict)
-
-
-        
-        return month_dict, dayEnd+1
-
-
-    def using_threads(self,payload=None, max_workers = 3, period=4, loop_over=3, months=None):
-        print(self)
-        print(self.__class__.__name__)
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            dayResume = 1
-            
-            for _ in range(loop_over):
-                print(f"The dayResume is: {dayResume}")
-                print("""
-            
-            
-                """)
-                worker_list = []
-                for month in months:
-                    worker_list.append(executor.submit(self.rotate_date_kiwi,  payload =payload, month=month,dayResume=dayResume, period = period))
-                    time.sleep(0.5)
-
-            
-                for future in concurrent.futures.as_completed(worker_list):
-                    month_dict,dayResume = future.result()
-                    if month_dict == None:
-                        pass
-                    else:
-                        self.write_data_in_chunks(month_dict=month_dict)
-
     def return_dates(self, dateEnd, period):
         if self.payload['flight_type'] == 'oneway':
             dates = [self.payload['date_from'], self.payload['date_to']]
@@ -214,7 +135,7 @@ class Data_getter():
             for date in range(len(dates)):
                 dates[date] = dates[date] + pd.Timedelta(days = period)
 
-    def rotate_date_kiwi2(self, date):
+    def middle_man(self, date):
 
         if self.payload['flight_type'] == 'oneway':
             self.payload['date_from'], self.payload['date_to'] = date
@@ -233,8 +154,12 @@ class Data_getter():
         return temp_dict
 
     # this method is only to be for round flights as of 2/3/2023
-    def using_threads2(self, max_workers, dateEnd='31/12/2023', period=15):
+    def using_threads2(self, max_workers, dateEnd='31/12/2023', period=15, max_amm_times_for_file = 1):
         self.return_dates(dateEnd, period)
+        print(len(self.listDates))
+        count = 1
+
+
         looping_over = int(len(self.listDates)/max_workers) + (len(self.listDates)%max_workers>0)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -243,16 +168,10 @@ class Data_getter():
                 worker_list = []
                 worker_count =0
                 for date in self.listDates:
-                    if worker_count<2*max_workers:
+                    if worker_count<1*max_workers:
                         worker_count += 1
-                        worker_list.append(executor.submit(self.rotate_date_kiwi2, date=date))
-                        print('worker is given work')
+                        worker_list.append(executor.submit(self.middle_man, date=date))
                         time.sleep(0.5)
-                print("Workers have been stopped from being given work")
-                print("""
-                
-                
-                """)
 
 
                 for future in concurrent.futures.as_completed(worker_list):
@@ -262,6 +181,8 @@ class Data_getter():
                 else:
                     self.write_data_in_chunks(month_dict=temp_dict)
                 print(f"Completed these dates: {self.listDates[i]}")
+                print(f"We have written to the file {count} times")
+                count += 1
         
 
 # %% 
@@ -283,8 +204,8 @@ if __name__ == '__main__':
     'selected_cabins': 'M'}
 
     payload2= {
-    'fly_from': 'LTN',
-    'fly_to': 'IAS',
+    'fly_from': 'IAS',
+    'fly_to': 'LTN',
     'date_from': '01/04/2023',
     'date_to': '16/04/2023',
     'flight_type': 'oneway',
@@ -293,8 +214,10 @@ if __name__ == '__main__':
     'sort':'date',
     'selected_cabins': 'M'}
 
-    LTN_to_IAS_round = Data_getter(payload2, sanitise_data = True)
+    IAS_to_LTN_round = Data_getter(payload2, sanitise_data = True)
 
-    LTN_to_IAS_round.using_threads2(dateEnd = '31/12/2023', max_workers=2, period = 15)
+    IAS_to_LTN_round.using_threads2(dateEnd = '31/12/2023', max_workers=2, period = 15)
 
 
+
+# %%
