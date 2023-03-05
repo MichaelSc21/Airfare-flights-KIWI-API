@@ -11,7 +11,7 @@ import time
 
 
 class Data_getter():
-    def __init__(self, payload, sanitise_data=False):
+    def __init__(self, payload, sanitise_data=False, delete_data = False):
         self.payload = payload
         if payload['flight_type'] == 'oneway':
             self.oneway = True
@@ -22,6 +22,10 @@ class Data_getter():
 
         self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}.json"
         self.sanitise = sanitise_data
+        self.delete_data = delete_data
+        if self.delete_data:
+            self.write_data("")
+
 
     def get_data(self):
         url  = "https://api.tequila.kiwi.com/v2/search?"
@@ -29,7 +33,6 @@ class Data_getter():
             url += str(key) + '=' + str(value) + '&'
 
         url = url[:-1]
-        #print(url)
 
         headers = {
         'apikey': API_details.API_KEY,
@@ -93,10 +96,14 @@ class Data_getter():
         return json_string
     
     def write_data(self, data):
-        data= json.loads(data)
-        #data = data['data']
-        with open(self.filename, 'w') as f:
-            json.dump(data, f, indent=2)
+        if data == "":
+            with open(self.filename, 'w') as f:
+                pass
+        else:
+            data= json.loads(data)
+            #data = data['data']
+            with open(self.filename, 'w') as f:
+                json.dump(data, f, indent=2)
 
     def write_data_in_chunks(self, month_dict):
         try: 
@@ -112,8 +119,7 @@ class Data_getter():
             except Exception as err:
                 print(err)
                 file_json = month_dict
-            #print(f"Month_dict is of the type: {type(month_dict)}")
-            
+
             json.dump(file_json, f, indent = 2)
 
 
@@ -158,10 +164,10 @@ class Data_getter():
     # this method is only to be for round flights as of 2/3/2023
     def using_threads2(self, max_workers, dateEnd='31/12/2023', period=15, max = 1):
         self.return_dates(dateEnd, period)
-        print(len(self.listDates))
+
         count = 1
         #looping_over = int(len(self.listDates)/max) + (len(self.listDates)%max_workers>0)
-
+        
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             dateidx= 0
             #for i in range(looping_over):
@@ -186,8 +192,6 @@ class Data_getter():
                             print('Temp dict is empty')
                         else:
                             self.write_data_in_chunks(month_dict=temp_dict)
-                    #print(f"Completed these dates: {self.listDates[i]}")
-                    #print(f"Completed these dates: {date}")
                     print(f"We have written to the file {count} times")
                     count += 1
                     worker_list = []
@@ -217,8 +221,8 @@ if __name__ == '__main__':
     'limit': 1000}
 
     payload2= {
-    'fly_from': 'IAS',
-    'fly_to': 'LTN',
+    'fly_from': 'LTN',
+    'fly_to': 'IAS',
     'date_from': '01/04/2023',
     'date_to': '16/04/2023',
     'flight_type': 'oneway',
@@ -228,9 +232,9 @@ if __name__ == '__main__':
     'selected_cabins': 'M',
     'limit':1000}
 
-    IAS_to_LTN_round = Data_getter(payload2, sanitise_data = True)
+    #LTN_to_IAS_round = Data_getter(payload2, sanitise_data = True, delete_data = True)
 
-    IAS_to_LTN_round.using_threads2(dateEnd = '31/12/2023', max_workers=2, period = 16, max = 2)
+    #LTN_to_IAS_round.using_threads2(dateEnd = '31/12/2023', max_workers=2, period = 16, max = 2)
     # Note: the period that is passed as an argument into the using_threads2 functions should be +1 more compared to the difference between date_from and date_to and the same when looking for round tickets
 
 
