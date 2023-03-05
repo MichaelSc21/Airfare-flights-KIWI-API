@@ -6,14 +6,17 @@ import json
 import sys
 from scipy.optimize import curve_fit, leastsq
 
-# %%
 
-class create_big_df():
-    def __init__(self, filename): 
+
+class big_df():
+    def __init__(self, filename, filter_data_bool = False): 
         self.filename = filename
         self.df = pd.read_json(self.filename)
 
-        print(type(self.df))
+        if filter_data_bool == True:
+            self.filter_data()
+
+
 
     def filter_data(self):    
         mean = self.df['price'].mean()
@@ -32,9 +35,9 @@ class create_big_df():
     def create_small_df(self, method, quantile=None, ):
         self.method = method
         self.quantile = quantile
-        return create_small_df(self.df,self.method, self.quantile, self.filename)
+        return small_df(self.df,self.method, self.quantile, self.filename)
     
-class create_small_df():
+class small_df():
     def __init__(self, big_df, method, quantile, filename):
         self.df = pd.DataFrame(index=big_df.index.unique(), columns=['price'])
         
@@ -69,7 +72,7 @@ class create_small_df():
         self.guess = [self.guess_amp, 2*np.pi*self.guess_freq, self.phase,  self.guess_offset]
         self.filename = filename
         
-        self.x_line_dense = np.linspace(self.x_line.min(), self.x_line.max(), 2*len(self.x_line))
+        self.x_line_dense = np.linspace(self.x_line.min(), self.x_line.max(), 1*len(self.x_line))
         self.x_dense = pd.to_datetime(self.x_line_dense, unit='s')
         self.y_dense = np.zeros(shape=len(self.x_line_dense))
 
@@ -103,6 +106,8 @@ class create_small_df():
 
 
     def plot_polynomial(self,degree,  ax, colour):
+        if ax== None:
+            fig, ax = plt.subplots(figsize = (12, 6))
         y = self.y.astype(int)
         p= np.polyfit(self.x_line, y, degree)
         self.y_line = np.polyval(p,self.x_line_dense)
@@ -115,27 +120,48 @@ class create_small_df():
         ax.scatter(self.x, self.y, marker ='.', color=colour, label=self.filename)
         ax.legend(fontsize=12)
 
+    def add_dfs(self, instance, offset = 0):
+        # Aligining the 2 dataframes together
+        #sorting the beginning of the np array
+        for i in range(len(self.x)):
+            if self.x[i] == instance.x[0]:
+                print(i)
+                break
+        #sorting the end of the np array
+        for j in range(len(self.x), 0, -1):
+            if self.x[j] == instance.x[len(instance.x)-offset-1]:
+                break
+
+        y2=instance.y
+        new_x = self.x[i:j]
+        new_y = self.y[i:j]
+        y2 = y2[i:j]
+
+
+        
+        x_dense2 = instance.x_dense
+        for i in range(len(y2)):
+            y2[i+offset] = y2[i+offset] + self.y[i]
+
 
 
 
 
 
 # %%
-df_names = ['LTN_to_IAS_oneway']
-dict_df = {}
-small_df = {}
-for df_name in df_names:
-    
-    dict_df[df_name] = create_big_df(filename = df_name+'.json')
+if __name__ == '__main__':
+    df_names = ['IAS_to_LTN_oneway']
+    dict_df = {}
+    small_df = {}
+    for df_name in df_names:
+        
+        dict_df[df_name] = big_df(filename = df_name+'.json')
 
-    dict_df[df_name].filter_data()
-    temp_df = dict_df[df_name].df
-    small_df[df_name] = dict_df[df_name].create_small_df(method = 'quantile', quantile = 0.1)
-    fig, ax = plt.subplots(figsize = (12, 6))
-    #small_df[df_name].plot_polynomial(degree = 20, ax=ax, colour='red')
-    small_df[df_name].est_param()
-    small_df[df_name].model_based_on_param(10)
-    small_df[df_name].plot_graph_fourier(ax=ax, a= 1, b = -2700)
+        dict_df[df_name].filter_data()
+        temp_df = dict_df[df_name].df
+        small_df[df_name] = dict_df[df_name].small_df(method = 'quantile', quantile = 0.1)
+        fig, ax = plt.subplots(figsize = (12, 6))
+        small_df[df_name].plot_polynomial(degree = 7, ax=None, colour='red')
 
 
 # %%
