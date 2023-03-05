@@ -61,7 +61,7 @@ class Data_getter():
     def get_availability(row):
         return row['seats']
 
-
+    total_elem = 0
     def sanitise_data(self, data): 
         data = json.loads(data)
         try: 
@@ -83,6 +83,8 @@ class Data_getter():
 
         df['routecount'] = df['route'].apply(lambda row: len(row))
         df['seats_available'] = df['availability'].apply(lambda row: self.get_availability(row))
+        self.__class__.total_elem += df['price'].size
+        print(f"We have {df['price'].size} elements from this response")
 
         for col in df.columns:
             if col not in usecols:
@@ -140,6 +142,8 @@ class Data_getter():
         if self.payload['flight_type'] == 'oneway':
             self.payload['date_from'], self.payload['date_to'] = date
             temp_dict = self.get_data()
+            #test_dict= json.loads(temp_dict)
+            #print(test_dict['search_id'])
             if self.sanitise == True:
                 temp_dict = self.sanitise_data(temp_dict)
 
@@ -149,8 +153,6 @@ class Data_getter():
             if self.sanitise == True:
                 temp_dict = self.sanitise_data(temp_dict)
 
-
-        
         return temp_dict
 
     # this method is only to be for round flights as of 2/3/2023
@@ -158,31 +160,41 @@ class Data_getter():
         self.return_dates(dateEnd, period)
         print(len(self.listDates))
         count = 1
-        looping_over = int(len(self.listDates)/max) + (len(self.listDates)%max_workers>0)
-        worker_count =0
-        
+        #looping_over = int(len(self.listDates)/max) + (len(self.listDates)%max_workers>0)
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            print(max_workers)
-            for i in range(looping_over):
-                worker_list = []
-
-                for date in self.listDates:
-                    # The variable max makes sure that only a certain number of API calls can be done before the dictionaries with data have to be written to a file 
-                    if worker_count<max*max_workers:
-                        worker_count += 1
-                        worker_list.append(executor.submit(self.middle_man, date=date))
-                        time.sleep(0.5)
-
-                for future in concurrent.futures.as_completed(worker_list):
-                    temp_dict= future.result()
-                if temp_dict == None:
-                    pass
+            dateidx= 0
+            #for i in range(looping_over):
+            worker_list = []
+            worker_count =0
+            
+            while dateidx < len(self.listDates):
+                # The variable max makes sure that only a certain number of API calls can be done before the dictionaries with data have to be written to a file 
+                if worker_count<max*max_workers:
+                    worker_count += 1
+                    worker_list.append(executor.submit(self.middle_man, date=self.listDates[dateidx]))
+                    time.sleep(0.5)
+                    print(dateidx)
+                    dateidx += 1
                 else:
-                    self.write_data_in_chunks(month_dict=temp_dict)
-                print(f"Completed these dates: {self.listDates[i]}")
-                print(f"Completed these dates: {date}")
-                print(f"We have written to the file {count} times")
-                count += 1
+                    worker_count +=1 
+                
+                if worker_count>max*max_workers or dateidx == len(self.listDates):
+                    for future in concurrent.futures.as_completed(worker_list):
+                        temp_dict= future.result()
+                        if temp_dict == None:
+                            print('Temp dict is empty')
+                        else:
+                            self.write_data_in_chunks(month_dict=temp_dict)
+                    #print(f"Completed these dates: {self.listDates[i]}")
+                    #print(f"Completed these dates: {date}")
+                    print(f"We have written to the file {count} times")
+                    count += 1
+                    worker_list = []
+                    worker_count =0
+
+
+                
         
 
 # %% 
@@ -201,7 +213,8 @@ if __name__ == '__main__':
     'adults': '4',
     'curr': 'GBP',
     'sort':'date',
-    'selected_cabins': 'M'}
+    'selected_cabins': 'M',
+    'limit': 1000}
 
     payload2= {
     'fly_from': 'IAS',
@@ -212,12 +225,13 @@ if __name__ == '__main__':
     'adults': '4',
     'curr': 'GBP',
     'sort':'date',
-    'selected_cabins': 'M'}
+    'selected_cabins': 'M',
+    'limit':1000}
 
     IAS_to_LTN_round = Data_getter(payload2, sanitise_data = True)
 
-    IAS_to_LTN_round.using_threads2(dateEnd = '31/12/2023', max_workers=2, period = 15)
-
+    IAS_to_LTN_round.using_threads2(dateEnd = '31/12/2023', max_workers=2, period = 16, max = 2)
+    # Note: the period that is passed as an argument into the using_threads2 functions should be +1 more compared to the difference between date_from and date_to and the same when looking for round tickets
 
 
 # %%
