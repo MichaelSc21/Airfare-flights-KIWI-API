@@ -24,7 +24,7 @@ class Data_getter():
         self.sanitise = sanitise_data
         self.delete_data = delete_data
         if self.delete_data:
-            self.write_data("")
+            self.write_data("o")
 
 
     def get_data(self):
@@ -96,7 +96,7 @@ class Data_getter():
         return json_string
     
     def write_data(self, data):
-        if data == "":
+        if data == "o":
             with open(self.filename, 'w') as f:
                 pass
         else:
@@ -110,6 +110,7 @@ class Data_getter():
             with open(self.filename, 'r') as f:
                 file_json = json.load(f)
         except: 
+            print('file is empty')
             pass
 
         with open(self.filename, 'w') as f:
@@ -129,19 +130,22 @@ class Data_getter():
             dates = [self.payload['date_from'], self.payload['date_to']]
         elif self.payload['flight_type'] == 'round':
             dates = [self.payload['date_from'], self.payload['date_to'], self.payload['return_from'], self.payload['return_to']]
-
+        print(dateEnd)
         self.listDates = []
         dateEnd = pd.to_datetime(dateEnd,format="%d/%m/%Y")
-        
+        print(dateEnd)
         # Converts dates into pd.datetime
         for date in range(len(dates)):
             dates[date] = pd.to_datetime(dates[date],format="%d/%m/%Y")
 
+        self.listDates.append([date.strftime('%d/%m/%Y') for date in dates])
         # Loops over the dates until it gets to the dateEnd and adds them to self.listDates in the format dd/mm/YYYY
-        while dates[0] <= dateEnd:
-            self.listDates.append([date.strftime('%d/%m/%Y') for date in dates])
+        while dates[-1] < dateEnd:
+            print(f"{dates[-1]} is smaller than {dateEnd}")
             for date in range(len(dates)):
                 dates[date] = dates[date] + pd.Timedelta(days = period)
+            self.listDates.append([date.strftime('%d/%m/%Y') for date in dates])
+
 
     def middle_man(self, date):
 
@@ -162,7 +166,7 @@ class Data_getter():
         return temp_dict
 
     # this method is only to be for round flights as of 2/3/2023
-    def using_threads2(self, max_workers, dateEnd='31/12/2023', period=15, max = 1):
+    def using_threads2(self, max_workers, dateEnd=None, period=15, max = 1):
         self.return_dates(dateEnd, period)
 
         count = 1
@@ -184,14 +188,15 @@ class Data_getter():
                     dateidx += 1
                 else:
                     worker_count +=1 
-                
                 if worker_count>max*max_workers or dateidx == len(self.listDates):
                     for future in concurrent.futures.as_completed(worker_list):
                         temp_dict= future.result()
                         if temp_dict == None:
                             print('Temp dict is empty')
                         else:
+
                             self.write_data_in_chunks(month_dict=temp_dict)
+
                     print(f"We have written to the file {count} times")
                     count += 1
                     worker_list = []
@@ -221,10 +226,10 @@ if __name__ == '__main__':
     'limit': 1000}
 
     payload2= {
-    'fly_from': 'LTN',
-    'fly_to': 'IAS',
-    'date_from': '01/04/2023',
-    'date_to': '16/04/2023',
+    'fly_from': 'OPO',
+    'fly_to': 'BHX',
+    'date_from': '01/06/2023',
+    'date_to': '16/06/2023',
     'flight_type': 'oneway',
     'adults': '4',
     'curr': 'GBP',
@@ -232,9 +237,9 @@ if __name__ == '__main__':
     'selected_cabins': 'M',
     'limit':1000}
 
-    #LTN_to_IAS_round = Data_getter(payload2, sanitise_data = True, delete_data = True)
+    getter = Data_getter(payload2, sanitise_data = True, delete_data = True)
 
-    #LTN_to_IAS_round.using_threads2(dateEnd = '31/12/2023', max_workers=2, period = 16, max = 2)
+    getter.using_threads2(dateEnd = '12/5/2023', max_workers=1, period = 16, max = 1)
     # Note: the period that is passed as an argument into the using_threads2 functions should be +1 more compared to the difference between date_from and date_to and the same when looking for round tickets
 
 
