@@ -228,8 +228,8 @@ if __name__ == '__main__':
     payload2= {
     'fly_from': 'OPO',
     'fly_to': 'BHX',
-    'date_from': '01/06/2023',
-    'date_to': '16/06/2023',
+    'date_from': '01/04/2023',
+    'date_to': '16/04/2023',
     'flight_type': 'oneway',
     'adults': '4',
     'curr': 'GBP',
@@ -239,8 +239,9 @@ if __name__ == '__main__':
 
     getter = Data_getter(payload2, sanitise_data = True, delete_data = True)
 
-    getter.using_threads2(dateEnd = '12/5/2023', max_workers=1, period = 16, max = 1)
+    getter.using_threads2(dateEnd = '31/12/2023', max_workers=2, period = 16, max = 1)
     # Note: the period that is passed as an argument into the using_threads2 functions should be +1 more compared to the difference between date_from and date_to and the same when looking for round tickets
 
 
 # %%
+#Note: Have to redesign the whole dataframe, so don't use date for index for the big_df, use normal indices
