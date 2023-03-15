@@ -6,7 +6,7 @@ import json
 import sys
 from scipy.optimize import curve_fit, leastsq
 from mplcursors import cursor
-
+import plotly.express as px
 %matplotlib qt
 
 class big_df():
@@ -30,6 +30,7 @@ class big_df():
         print(len(self.df['price']))
 
         self.df['departure_date'] = pd.to_datetime(self.df['departure_date'].str[:10])
+        self.df = self.df.sort_values(by=['departure_date', 'price'])
 
         self.df.index = self.df['departure_date']
     
@@ -40,23 +41,28 @@ class big_df():
     
 class small_df():
     def __init__(self, big_df, method, quantile, filename):
-        self.df = pd.DataFrame(index=big_df.index.unique(), columns=['price'])
-        
+        self.df = pd.DataFrame(columns=['departure_date', 'price', 'seats_available'])
+        unique_dates = big_df['departure_date'].unique()
         if method == 'mean':
-            for i in big_df.index.unique():
+            for i in big_df['departure_date'].unique():
                 self.df.loc[i] = pd.Series(big_df.loc[i, 'price']).mean()
         elif method == 'min':
-            for i in big_df.index.unique():
+            for i in big_df['departure_date'].unique():
                 self.df.loc[i] = pd.Series(big_df.loc[i, 'price']).min()
         elif method == 'quantile':
             if quantile == None:
                 raise TypeError("The method selected is quantile which means you also need to pass a value for the quantile")
             else: 
-                for i in big_df.index.unique():
-                    self.df.loc[i] = pd.Series(big_df.loc[i, 'price']).quantile(q=quantile)
+                for i in range(len(unique_dates)):
+                    quantile_val = pd.Series(big_df.loc[unique_dates[i], 'price']).quantile(q=quantile, interpolation = 'lower')
+                    idx = np.where(quantile_val == big_df.loc[unique_dates[i], 'price'])[0][0]
+                    new_row = {'departure_date':unique_dates[i], 'price': quantile_val, 'seats_available': big_df.loc[unique_dates[i], 'seats_available'][idx]}
+                    self.df.loc[i] = new_row
+                self.df.index = self.df['departure_date']
         else:
             raise TypeError("Invalid method selected")
         
+        self.big_df = big_df
         self.y = self.df['price']
         self.x = self.df.index
         self.x_line = np.array(self.x.astype(int) / 10**9)
@@ -104,7 +110,7 @@ class small_df():
         ax.scatter(self.x, self.y, color = colour, marker='.',label = self.filename)
         ax.legend(fontsize=12)
         ax.set_title('Price of flights in the bottom 15% for 4 adults')
-
+        
 
     def plot_polynomial(self,degree,  ax, colour):
         if ax== None:
@@ -120,7 +126,9 @@ class small_df():
         ax.set_title('The price of a Oneway flight on each of the day of the year for 4 adults( adult > 12y/o)')
         ax.scatter(self.x, self.y, marker ='.', color=colour, label=self.filename)
         ax.legend(fontsize=12)
-
+        plt.savefig('test3.svg')
+        
+    # This is still a work in progress
     def add_dfs(self, instance, offset = 0):
         # Aligining the 2 dataframes together
         #sorting the beginning of the np array
@@ -144,49 +152,20 @@ class small_df():
         for i in range(len(y2)):
             y2[i+offset] = y2[i+offset] + self.y[i]
 
-    def plot_with_hover(self):
-        c = np.random.randint(1,5,size=15)
-        norm = plt.Normalize(1,4)
-        cmap = plt.cm.RdYlGn
-        names = np.array(list("ABCDEFGHIJKLMNO"))
+    
+    # Plotting a graph with plotly rather than matplotlib since I want to create interactive graphs which can be shown on the internet. Matplotlib doesn't have that functionality
+    def plot_graph_plotly(self):
+        customdata = np.stack((self.df['seats_available']), axis=-1)
+        temp_x = self.x
+        temp_y = self.y
 
-        fig,ax = plt.subplots(figsize = (12, 6))
-        sc = plt.scatter(self.x,self.y)
-
-        annot = ax.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
-                            bbox=dict(boxstyle="round", fc="w"),
-                            arrowprops=dict(arrowstyle="->"))
-        annot.set_visible(False)
-
-        def update_annot(ind):
-            
-            pos = sc.get_offsets()[ind["ind"][0]]
-            annot.xy = pos
-            text = "{}".format(" ".join(list(map(str,self.y[ind["ind"]]))))
-            annot.set_text(text)
-            #annot.get_bbox_patch().set_facecolor(cmap(norm(c[ind["ind"][0]])))
-            #annot.get_bbox_patch().set_alpha(0.4)
-            
-
-        def hover(event):
-            vis = annot.get_visible()
-            if event.inaxes == ax:
-                cont, ind = sc.contains(event)
-                if cont:
-                    update_annot(ind)
-                    annot.set_visible(True)
-                    fig.canvas.draw_idle()
-                else:
-                    if vis:
-                        annot.set_visible(False)
-                        fig.canvas.draw_idle()
-
-        fig.canvas.mpl_connect("motion_notify_event", hover)
-        plt.show()
-
-
-
-
+        hovertemplate = ('Seats available: %{customdata}<br>' + 
+            'price: %{temp_y} <br>' + 
+            'date: %{temp_x}' + 
+            '<extra></extra>')
+        fig = px.scatter(self.df, x=self.x, y=self.y)
+        fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
+        fig.write_html('D:\COding\Python\Python web scraping\Flight tickets\Airfare-flights KIWI API\Graphs\Plotly graphs\Test1 Interactive plot.html')
 
 # %%
 if __name__ == '__main__':
@@ -198,11 +177,11 @@ if __name__ == '__main__':
         big_dfs[df_name] = big_df(filename = df_name+'.json', filter_data_bool=True)
 
         temp_df = big_dfs[df_name].df
-        small_dfs[df_name] = big_dfs[df_name].create_small_df(method = 'quantile', quantile = 0.1)
+        small_dfs[df_name] = big_dfs[df_name].create_small_df(method = 'quantile', quantile = 0.15)
         #fig, ax = plt.subplots(figsize = (12, 6))
-        #small_dfs[df_name].plot_polynomial(degree = 7, ax=ax, colour='red')
+        df = small_dfs[df_name].df
 
-        small_dfs[df_name].plot_with_hover()
+        small_dfs[df_name].plot_graph_plotly()
 
 
 # %%
