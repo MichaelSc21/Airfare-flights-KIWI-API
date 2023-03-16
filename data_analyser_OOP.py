@@ -7,6 +7,7 @@ import sys
 from scipy.optimize import curve_fit, leastsq
 from mplcursors import cursor
 import plotly.express as px
+import plotly.graph_objects as go
 %matplotlib qt
 
 class big_df():
@@ -156,14 +157,33 @@ class small_df():
     # Plotting a graph with plotly rather than matplotlib since I want to create interactive graphs which can be shown on the internet. Matplotlib doesn't have that functionality
     def plot_graph_plotly(self):
         customdata = np.stack((self.df['seats_available']), axis=-1)
-        temp_x = self.x
-        temp_y = self.y
 
         hovertemplate = ('Seats available: %{customdata}<br>' + 
-            'price: %{temp_y} <br>' + 
-            'date: %{temp_x}' + 
+            'price: %{y} <br>' + 
+            'date: %{x}' + 
             '<extra></extra>')
         fig = px.scatter(self.df, x=self.x, y=self.y)
+        
+        fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
+        fig.write_html('D:\COding\Python\Python web scraping\Flight tickets\Airfare-flights KIWI API\Graphs\Plotly graphs\Test1 Interactive plot.html')
+
+    def plot_polynomial_plotly(self, degree):
+        customdata = np.stack((self.df['seats_available']), axis=-1)
+        hovertemplate = ('Seats available: %{customdata}<br>' + 
+            'price: %{y} <br>' + 
+            'date: %{x}' + 
+            '<extra></extra>')
+        self.y = self.y.astype(int)
+        p= np.polyfit(self.x_line, self.y, degree)
+        self.y_line = np.polyval(p,self.x_line)
+
+        trace1 = go.Scatter(x=self.x, y=self.y, mode='markers', name='line')
+        trace2 = go.Scatter(x=self.x, y=self.y_line, mode='lines', name='scatter')
+        data = [trace1, trace2]
+        layout = go.Layout(title='Flights oneway from OPO to BHX for 4 adults ')
+
+        fig = go.Figure(data = data, layout=layout)
+
         fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
         fig.write_html('D:\COding\Python\Python web scraping\Flight tickets\Airfare-flights KIWI API\Graphs\Plotly graphs\Test1 Interactive plot.html')
 
@@ -181,7 +201,7 @@ if __name__ == '__main__':
         #fig, ax = plt.subplots(figsize = (12, 6))
         df = small_dfs[df_name].df
 
-        small_dfs[df_name].plot_graph_plotly()
+        small_dfs[df_name].plot_polynomial_plotly(12)
 
 
 # %%
