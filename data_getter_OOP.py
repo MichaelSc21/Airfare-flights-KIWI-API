@@ -125,11 +125,25 @@ class Data_getter():
 
 
 
-    def return_dates(self, dateEnd, period):
+    def return_dates(self, dateStart, dateEnd, period, nights_in_dst):
+        if dateStart != None:
+            self.payload['date_from'] = dateStart
+            self.payload['date_to'] = pd.to_datetime(dateStart,format="%d/%m/%Y") + pd.Timedelta(days=period-1)
+            self.payload['date_to']=self.payload['date_to'].strftime('%d/%m/%Y')
+
+
+
         if self.payload['flight_type'] == 'oneway':
             dates = [self.payload['date_from'], self.payload['date_to']]
         elif self.payload['flight_type'] == 'round':
+            self.payload['return_from'] = pd.to_datetime(self.payload['date_from'] ,format="%d/%m/%Y") + pd.Timedelta(days=nights_in_dst)
+            self.payload['return_from'] = self.payload['return_from'].strftime('%d/%m/%Y')
+            self.payload['return_to'] = pd.to_datetime(self.payload['date_to'] ,format="%d/%m/%Y") + pd.Timedelta(days=nights_in_dst)
+            self.payload['return_to'] = self.payload['return_to'].strftime('%d/%m/%Y')
+
             dates = [self.payload['date_from'], self.payload['date_to'], self.payload['return_from'], self.payload['return_to']]
+        
+        print(self.payload)
         print(dateEnd)
         self.listDates = []
         dateEnd = pd.to_datetime(dateEnd,format="%d/%m/%Y")
@@ -154,20 +168,24 @@ class Data_getter():
             temp_dict = self.get_data()
             #test_dict= json.loads(temp_dict)
             #print(test_dict['search_id'])
-            if self.sanitise == True:
-                temp_dict = self.sanitise_data(temp_dict)
 
         elif self.payload['flight_type'] == 'round':
             self.payload['date_from'], self.payload['date_to'], self.payload['return_from'],self.payload['return_to'] = date
             temp_dict = self.get_data()
-            if self.sanitise == True:
-                temp_dict = self.sanitise_data(temp_dict)
+            
+        if self.sanitise == True:
+            temp_dict = self.sanitise_data(temp_dict)
+        else:
+            temp_dict= json.loads(temp_dict)
+            temp_dict= json.dumps(temp_dict['data'])
+
+
 
         return temp_dict
 
     # this method is only to be for round flights as of 2/3/2023
-    def using_threads2(self, max_workers, dateEnd=None, period=15, max = 1):
-        self.return_dates(dateEnd, period)
+    def using_threads2(self, max_workers, dateStart=None, dateEnd=None, period=16,nights_in_dst=None, max = 1):
+        self.return_dates(dateStart=dateStart, dateEnd=dateEnd, period=period, nights_in_dst=nights_in_dst)
 
         count = 1
         #looping_over = int(len(self.listDates)/max) + (len(self.listDates)%max_workers>0)
@@ -214,8 +232,8 @@ if __name__ == '__main__':
     'fly_to': 'IAS',
     'date_from': '01/04/2023',
     'date_to': '16/04/2023',
-    'return_from': '17/04/2023',
-    'return_to': '01/05/2023',
+    'return_from': '08/04/2023',
+    'return_to': '23/04/2023',
     'nights_in_dst_from': 7,
     'nights_in_dst_to': 7,
     'flight_type': 'round',
@@ -237,11 +255,10 @@ if __name__ == '__main__':
     'selected_cabins': 'M',
     'limit':1000}
 
-    getter = Data_getter(payload2, sanitise_data = True, delete_data = True)
+    getter = Data_getter(payload, sanitise_data = True, delete_data = True)
 
-    getter.using_threads2(dateEnd = '31/12/2023', max_workers=2, period = 16, max = 1)
+    getter.using_threads2(dateStart = '01/04/2023', dateEnd = '31/12/2023', max_workers=2, period = 16, nights_in_dst=7, max = 1)
     # Note: the period that is passed as an argument into the using_threads2 functions should be +1 more compared to the difference between date_from and date_to and the same when looking for round tickets
 
 
 # %%
-#Note: Have to redesign the whole dataframe, so don't use date for index for the big_df, use normal indices
