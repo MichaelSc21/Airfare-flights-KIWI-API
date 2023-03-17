@@ -80,9 +80,12 @@ class small_df():
                         'price': quantile_val, 
                         'seats_available': big_df.loc[unique_dates[i], 'seats_available'][idx]}
                     self.df.loc[i] = new_row
-                self.df.index = self.df['departure_date']
+                #self.df.index = self.df['departure_date']
         else:
             raise TypeError("Invalid method selected")
+        
+        self.df.index = self.df['departure_date']
+        self.df = self.df.drop('departure_date', axis=1)
         
         self.big_df = big_df
         self.y = self.df['price']
@@ -132,7 +135,9 @@ class small_df():
         for i in ind:
             self.y_dense += self.sinfunc(self.x_line_dense, self.est_values[0][i], self.est_values[1][i],self.est_values[2][i]) 
 
-    def plot_graph_fourier(self, ax, a=1, b=0, colour='blue'):
+    def plot_graph_fourier(self, ax= None, a=1, b=0, colour='blue'):
+        if ax == None:
+            fig, ax = plt.subplots(figzie = (12, 6))
         ax.plot(self.x_dense,self.y_dense*a+b, label = df_name, color = colour)
         ax.scatter(self.x, self.y, color = colour, marker='.',label = self.filename)
         ax.legend(fontsize=12)
@@ -213,6 +218,54 @@ class small_df():
         fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
         fig.write_html('D:\COding\Python\Python web scraping\Flight tickets\Airfare-flights KIWI API\Graphs\Plotly graphs\Test1 Interactive plot.html')
 
+    def write_data_to_file_small_df(self):
+        self.small_df_filename = self.filename[:-5] + '_small_df' + '.json'
+        self.df.to_json(orient='split', path_or_buf=self.small_df_filename)
+    def load_small_df(self):
+        self.json_df = pd.read_json(orient='split', path_or_buf=self.small_df_filename)
+        return self.json_df
+
+
+    def compare_data_small_df(self, degree):
+        self.json_df = pd.read_json(orient='split', path_or_buf=self.small_df_filename)
+        price_change_mask = self.df['price'] - self.json_df['price']
+        colour_series = pd.Series()
+        price_change_text = pd.Series()
+        for i in price_change_mask:
+            if i == 0:
+                colour_series.append('blue')
+                price_change_text.append('No price change')
+            elif i> 0: 
+                #Price is higher now
+                colour_series.append('red')
+                price_change_text.append('Price increased by £'+ i)
+            else:
+                #Price is lower now
+                i = -i
+                colour_series.append('green')
+                price_change_text.append('Price decreased by £'+ i)
+
+        customdata = np.stack((self.df['seats_available'], price_change_text), axis=-1)
+        hovertemplate = ('Seats available: %{customdata}<br>' + 
+            'price: %{y} <br>' + 
+            'date: %{x}' + 
+            '<extra></extra>')
+        self.y = self.y.astype(int)
+        p= np.polyfit(self.x_line, self.y, degree)
+        self.y_line = np.polyval(p,self.x_line)
+
+        trace1 = go.Scatter(x=self.x, y=self.y, mode='markers', color = colour_series ,name='line')
+        trace2 = go.Scatter(x=self.x, y=self.y_line, mode='lines', name='scatter')
+        data = [trace1, trace2]
+        layout = go.Layout(title='Flights oneway from OPO to BHX for 4 adults ')
+
+        fig = go.Figure(data = data, layout=layout)
+
+        fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
+        fig.write_html('D:\COding\Python\Python web scraping\Flight tickets\Airfare-flights KIWI API\Graphs\Plotly graphs\Test1 Interactive plot.html')
+
+
+
 # %%
 if __name__ == '__main__':
     df_names = ['LTN_to_IAS_round']
@@ -229,7 +282,9 @@ if __name__ == '__main__':
         df = small_dfs[df_name].df
 
         small_dfs[df_name].plot_polynomial_plotly(12)
-
+        small_dfs[df_name].write_data_to_file_small_df()
+        small_dfs[df_name].compare_data_small_df(12)
+        df2= small_dfs[df_name].load_small_df()
 
 # %%
 """
