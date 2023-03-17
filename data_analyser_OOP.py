@@ -45,11 +45,24 @@ class small_df():
         self.df = pd.DataFrame(columns=['departure_date', 'price', 'seats_available'])
         unique_dates = big_df['departure_date'].unique()
         if method == 'mean':
-            for i in big_df['departure_date'].unique():
-                self.df.loc[i] = pd.Series(big_df.loc[i, 'price']).mean()
+            for i in range(len(unique_dates)):
+                mean = pd.Series(big_df.loc[unique_dates[i], 'price']).mean()
+                idx = big_df.loc[unique_dates[i], 'price'].gt(mean).argmax()-1
+                new_row = {
+                    'departure_date':unique_dates[i], 
+                    'price': big_df.loc[unique_dates[i], 'price'][idx], 
+                    'seats_available': big_df.loc[unique_dates[i], 'seats_available'][idx]}
+                #print(new_row)
+                self.df.loc[i] = new_row
         elif method == 'min':
-            for i in big_df['departure_date'].unique():
-                self.df.loc[i] = pd.Series(big_df.loc[i, 'price']).min()
+            for i in range(len(unique_dates)):
+                self.df.loc[i] = pd.Series(big_df.loc[unique_dates[i], 'price']).min()
+                new_row = {
+                    'departure_date':unique_dates[i], 
+                    'price': big_df.loc[unique_dates[i], 'price'][0], 
+                    'seats_available': big_df.loc[unique_dates[i], 'seats_available'][0]}
+                self.df.loc[i] = new_row
+
         elif method == 'quantile':
             if quantile == None:
                 raise TypeError("The method selected is quantile which means you also need to pass a value for the quantile")
@@ -57,7 +70,15 @@ class small_df():
                 for i in range(len(unique_dates)):
                     quantile_val = pd.Series(big_df.loc[unique_dates[i], 'price']).quantile(q=quantile, interpolation = 'lower')
                     idx = np.where(quantile_val == big_df.loc[unique_dates[i], 'price'])[0][0]
-                    new_row = {'departure_date':unique_dates[i], 'price': quantile_val, 'seats_available': big_df.loc[unique_dates[i], 'seats_available'][idx]}
+                    idx2 = big_df.loc[unique_dates[i], 'price'].eq(quantile_val).argmax()
+                    if idx == idx2:
+                        pass
+                    else:
+                        print('sglkth')
+                    new_row = {
+                        'departure_date':unique_dates[i], 
+                        'price': quantile_val, 
+                        'seats_available': big_df.loc[unique_dates[i], 'seats_available'][idx]}
                     self.df.loc[i] = new_row
                 self.df.index = self.df['departure_date']
         else:
@@ -65,8 +86,16 @@ class small_df():
         
         self.big_df = big_df
         self.y = self.df['price']
+        print(self.y)
         self.x = self.df.index
         self.x_line = np.array(self.x.astype(int) / 10**9)
+        self.filename = filename
+
+
+    def sinfunc(self,x, a, w, p):
+        return a * np.sin(x*w+p)
+    
+    def est_param_fourier(self):
         # Finding the amplitude of the sin waves
         self.amp = abs(np.fft.fft(self.y))
         #Sorting the indices of the amplitudes in descending order
@@ -78,17 +107,14 @@ class small_df():
         self.phase = 0
         self.guess_offset = np.mean(self.y) * 2**0.5
         self.guess = [self.guess_amp, 2*np.pi*self.guess_freq, self.phase,  self.guess_offset]
-        self.filename = filename
+
         
         self.x_line_dense = np.linspace(self.x_line.min(), self.x_line.max(), 1*len(self.x_line))
         self.x_dense = pd.to_datetime(self.x_line_dense, unit='s')
         self.y_dense = np.zeros(shape=len(self.x_line_dense))
 
 
-    def sinfunc(self,x, a, w, p):
-        return a * np.sin(x*w+p)
-    
-    def est_param(self):
+
         self.est_amps = np.empty(len(self.amp))
         self.est_freq = np.empty(len(self.amp))
         self.est_phase = np.empty(len(self.amp))
@@ -100,7 +126,7 @@ class small_df():
         
         self.est_values = [self.est_amps, self.est_freq, self.est_phase]
 
-    def model_based_on_param(self,degree):
+    def model_based_on_param_fourier(self,degree):
         
         ind = np.argpartition(self.est_values[0], -degree)[-degree:]
         for i in ind:
@@ -189,7 +215,7 @@ class small_df():
 
 # %%
 if __name__ == '__main__':
-    df_names = ['OPO_to_BHX_oneway']
+    df_names = ['LTN_to_IAS_round']
     big_dfs = {}
     small_dfs = {}
     for df_name in df_names:
@@ -197,7 +223,8 @@ if __name__ == '__main__':
         big_dfs[df_name] = big_df(filename = df_name+'.json', filter_data_bool=True)
 
         temp_df = big_dfs[df_name].df
-        small_dfs[df_name] = big_dfs[df_name].create_small_df(method = 'quantile', quantile = 0.15)
+        small_dfs[df_name] = big_dfs[df_name].create_small_df(method = 'quantile', quantile =0.14)
+
         #fig, ax = plt.subplots(figsize = (12, 6))
         df = small_dfs[df_name].df
 
@@ -213,3 +240,5 @@ Sort out the fourier curve fitting
 """
 
 
+
+# %%
