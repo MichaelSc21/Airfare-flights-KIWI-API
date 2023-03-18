@@ -8,7 +8,7 @@ from scipy.optimize import curve_fit, leastsq
 from mplcursors import cursor
 import plotly.express as px
 import plotly.graph_objects as go
-%matplotlib qt
+#%matplotlib qt
 
 class big_df():
     def __init__(self, filename, filter_data_bool = False): 
@@ -41,7 +41,7 @@ class big_df():
         return small_df(self.df,self.method, self.quantile, self.filename)
     
 class small_df():
-    def __init__(self, big_df, method, quantile, filename):
+    def __init__(self, big_df, method, quantile, filename, payload):
         self.df = pd.DataFrame(columns=['departure_date', 'price', 'seats_available'])
         unique_dates = big_df['departure_date'].unique()
         if method == 'mean':
@@ -50,8 +50,8 @@ class small_df():
                 idx = big_df.loc[unique_dates[i], 'price'].gt(mean).argmax()-1
                 new_row = {
                     'departure_date':unique_dates[i], 
-                    'price': big_df.loc[unique_dates[i], 'price'][idx], 
-                    'seats_available': big_df.loc[unique_dates[i], 'seats_available'][idx]}
+                    'price': pd.Series(big_df.loc[unique_dates[i], 'price'])[idx], 
+                    'seats_available': pd.Series(big_df.loc[unique_dates[i], 'seats_available'])[idx]}
                 #print(new_row)
                 self.df.loc[i] = new_row
         elif method == 'min':
@@ -59,8 +59,8 @@ class small_df():
                 self.df.loc[i] = pd.Series(big_df.loc[unique_dates[i], 'price']).min()
                 new_row = {
                     'departure_date':unique_dates[i], 
-                    'price': big_df.loc[unique_dates[i], 'price'][0], 
-                    'seats_available': big_df.loc[unique_dates[i], 'seats_available'][0]}
+                    'price': pd.Series(big_df.loc[unique_dates[i], 'price'])[0], 
+                    'seats_available': pd.Series(big_df.loc[unique_dates[i], 'seats_available'])[0]}
                 self.df.loc[i] = new_row
 
         elif method == 'quantile':
@@ -88,6 +88,7 @@ class small_df():
         print(self.y)
         self.x = self.df.index
         self.x_line = np.array(self.x.astype(int) / 10**9)
+        self.payload = payload
         self.filename = filename
         self.small_df_filename = self.filename[:-5] + '_small_df' + '.json'
 
@@ -223,23 +224,23 @@ class small_df():
         return self.json_df
 
 
-    def compare_data_small_df(self, degree):
+    def compare_data_small_df(self):
         self.json_df = pd.read_json(orient='split', path_or_buf=self.small_df_filename)
-        print(len(self.json_df))
-        print(len(self.df))
         price_change_mask = self.df['price'] - self.json_df['price']
-        colour_series = []
+        colour_series =[]
         price_change_text = []
+
         for i in price_change_mask:
-            if i == 0:
+            # Nothing will be added to the grpah if the data is unavailable
+            if i == 0 or i == np.nan:
                 colour_series.append('blue')
                 price_change_text.append('No price change')
             elif i> 0: 
-                #Price is higher now
+                #Price is higher now compared to the last time it was checked
                 colour_series.append('red')
                 price_change_text.append('Price increased by £'+ str(i))
-            else:
-                #Price is lower now
+            elif i < 0:
+                #Price is lower now compared to the last time it was checked
                 i = -i
                 colour_series.append('green')
                 price_change_text.append('Price decreased by £'+ str(i))
@@ -250,21 +251,14 @@ class small_df():
             'price: %{y} <br>' + 
             'date: %{x}' + 
             '<extra></extra>')
-        self.y = self.y.astype(int)
-        p= np.polyfit(self.x_line, self.y, degree)
-        self.y_line = np.polyval(p,self.x_line)
-
         trace1 = go.Scatter(x=self.x, y=self.y, mode='markers',name='line')
-        trace2 = go.Scatter(x=self.x, y=self.y_line, mode='lines', name='scatter')
-        data = [trace1, trace2]
-        layout = go.Layout(title='Flights oneway from OPO to BHX for 4 adults ')
+        data = [trace1]
+        layout = go.Layout(title=f"Flights {self.payload['flight_type']} from {self.payload['fly_from']} to {self.payload['fly_to']} for {self.payload['adults']} adults")
 
         fig = go.Figure(data = data, layout=layout)
-
         fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
         fig.update_traces(marker=dict(color=colour_series))
         fig.write_html('D:\COding\Python\Python web scraping\Flight tickets\Airfare-flights KIWI API\Graphs\Plotly graphs\Test1 Interactive plot.html')
-
 
 
 # %%
@@ -284,8 +278,8 @@ if __name__ == '__main__':
 
         small_dfs[df_name].plot_polynomial_plotly(12)
         #small_dfs[df_name].write_data_to_file_small_df()
-        small_dfs[df_name].compare_data_small_df(12)
-        df2= small_dfs[df_name].load_small_df()
+        small_dfs[df_name].compare_data_small_df()
+        json_df = small_dfs[df_name].load_small_df()
 
 # %%
 """
