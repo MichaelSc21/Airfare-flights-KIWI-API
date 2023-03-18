@@ -70,15 +70,11 @@ class small_df():
                 for i in range(len(unique_dates)):
                     quantile_val = pd.Series(big_df.loc[unique_dates[i], 'price']).quantile(q=quantile, interpolation = 'lower')
                     idx = np.where(quantile_val == big_df.loc[unique_dates[i], 'price'])[0][0]
-                    idx2 = big_df.loc[unique_dates[i], 'price'].eq(quantile_val).argmax()
-                    if idx == idx2:
-                        pass
-                    else:
-                        print('sglkth')
+                    #idx2 = big_df.loc[unique_dates[i], 'price'].eq(quantile_val).argmax()
                     new_row = {
                         'departure_date':unique_dates[i], 
                         'price': quantile_val, 
-                        'seats_available': big_df.loc[unique_dates[i], 'seats_available'][idx]}
+                        'seats_available': pd.Series(big_df.loc[unique_dates[i], 'seats_available'])[idx]}
                     self.df.loc[i] = new_row
                 #self.df.index = self.df['departure_date']
         else:
@@ -93,6 +89,7 @@ class small_df():
         self.x = self.df.index
         self.x_line = np.array(self.x.astype(int) / 10**9)
         self.filename = filename
+        self.small_df_filename = self.filename[:-5] + '_small_df' + '.json'
 
 
     def sinfunc(self,x, a, w, p):
@@ -228,9 +225,11 @@ class small_df():
 
     def compare_data_small_df(self, degree):
         self.json_df = pd.read_json(orient='split', path_or_buf=self.small_df_filename)
+        print(len(self.json_df))
+        print(len(self.df))
         price_change_mask = self.df['price'] - self.json_df['price']
-        colour_series = pd.Series()
-        price_change_text = pd.Series()
+        colour_series = []
+        price_change_text = []
         for i in price_change_mask:
             if i == 0:
                 colour_series.append('blue')
@@ -238,15 +237,16 @@ class small_df():
             elif i> 0: 
                 #Price is higher now
                 colour_series.append('red')
-                price_change_text.append('Price increased by £'+ i)
+                price_change_text.append('Price increased by £'+ str(i))
             else:
                 #Price is lower now
                 i = -i
                 colour_series.append('green')
-                price_change_text.append('Price decreased by £'+ i)
+                price_change_text.append('Price decreased by £'+ str(i))
 
         customdata = np.stack((self.df['seats_available'], price_change_text), axis=-1)
-        hovertemplate = ('Seats available: %{customdata}<br>' + 
+        hovertemplate = ('Seats available: %{customdata[0]}<br>' + 
+            '%{customdata[1]}<br>' + 
             'price: %{y} <br>' + 
             'date: %{x}' + 
             '<extra></extra>')
@@ -254,7 +254,7 @@ class small_df():
         p= np.polyfit(self.x_line, self.y, degree)
         self.y_line = np.polyval(p,self.x_line)
 
-        trace1 = go.Scatter(x=self.x, y=self.y, mode='markers', color = colour_series ,name='line')
+        trace1 = go.Scatter(x=self.x, y=self.y, mode='markers',name='line')
         trace2 = go.Scatter(x=self.x, y=self.y_line, mode='lines', name='scatter')
         data = [trace1, trace2]
         layout = go.Layout(title='Flights oneway from OPO to BHX for 4 adults ')
@@ -262,6 +262,7 @@ class small_df():
         fig = go.Figure(data = data, layout=layout)
 
         fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
+        fig.update_traces(marker=dict(color=colour_series))
         fig.write_html('D:\COding\Python\Python web scraping\Flight tickets\Airfare-flights KIWI API\Graphs\Plotly graphs\Test1 Interactive plot.html')
 
 
@@ -282,7 +283,7 @@ if __name__ == '__main__':
         df = small_dfs[df_name].df
 
         small_dfs[df_name].plot_polynomial_plotly(12)
-        small_dfs[df_name].write_data_to_file_small_df()
+        #small_dfs[df_name].write_data_to_file_small_df()
         small_dfs[df_name].compare_data_small_df(12)
         df2= small_dfs[df_name].load_small_df()
 
@@ -293,7 +294,11 @@ Sort out the fourier curve fitting
 
 
 """
+"""
+TO DO as of 17/3/2023:
+Sort out the function that compares one dataframe from the past and one from the present
 
+"""
 
 
 # %%
