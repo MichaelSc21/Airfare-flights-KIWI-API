@@ -2,8 +2,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import json
-import sys
+import API_details
 from scipy.optimize import curve_fit, leastsq
 from mplcursors import cursor
 import plotly.express as px
@@ -11,10 +10,10 @@ import plotly.graph_objects as go
 #%matplotlib qt
 
 class big_df():
-    def __init__(self, filename, filter_data_bool = False): 
+    def __init__(self, filename, payload = None, filter_data_bool = False): 
         self.filename = filename
         self.df = pd.read_json(self.filename)
-
+        self.payload = payload
         if filter_data_bool == True:
             self.filter_data()
 
@@ -38,7 +37,7 @@ class big_df():
     def create_small_df(self, method, quantile=None, ):
         self.method = method
         self.quantile = quantile
-        return small_df(self.df,self.method, self.quantile, self.filename)
+        return small_df(self.df,self.method, self.quantile, self.filename, self.payload)
     
 class small_df():
     def __init__(self, big_df, method, quantile, filename, payload):
@@ -91,7 +90,7 @@ class small_df():
         self.payload = payload
         self.filename = filename
         self.small_df_filename = self.filename[:-5] + '_small_df' + '.json'
-
+        self.file_graph_plotly = API_details.FILE_GRAPH_PLOTLY
 
     def sinfunc(self,x, a, w, p):
         return a * np.sin(x*w+p)
@@ -214,7 +213,7 @@ class small_df():
         fig = go.Figure(data = data, layout=layout)
 
         fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
-        fig.write_html('D:\COding\Python\Python web scraping\Flight tickets\Airfare-flights KIWI API\Graphs\Plotly graphs\Test1 Interactive plot.html')
+        fig.write_html(self.file_graph_plotly)
 
     def write_data_to_file_small_df(self):
         self.small_df_filename = self.filename[:-5] + '_small_df' + '.json'
@@ -224,7 +223,7 @@ class small_df():
         return self.json_df
 
 
-    def compare_data_small_df(self):
+    def compare_data_small_df_plotly(self):
         self.json_df = pd.read_json(orient='split', path_or_buf=self.small_df_filename)
         price_change_mask = self.df['price'] - self.json_df['price']
         colour_series =[]
@@ -258,7 +257,7 @@ class small_df():
         fig = go.Figure(data = data, layout=layout)
         fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
         fig.update_traces(marker=dict(color=colour_series))
-        fig.write_html('D:\COding\Python\Python web scraping\Flight tickets\Airfare-flights KIWI API\Graphs\Plotly graphs\Test1 Interactive plot.html')
+        fig.write_html(self.file_graph_plotly)
 
 
 # %%
