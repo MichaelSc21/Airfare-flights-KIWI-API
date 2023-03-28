@@ -20,7 +20,7 @@ class Data_getter():
             self.oneway = False
             self.round = True
 
-        self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}.json"
+        self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}.parquet"
         self.sanitise = sanitise_data
         self.delete_data = delete_data
         if self.delete_data:
@@ -92,8 +92,8 @@ class Data_getter():
         for col in df.columns:
             if col not in usecols:
                 df.drop(col, axis=1, inplace=True)
-        json_string = df.to_json(orient='records')
-        return json_string
+        #json_string = df.to_json(orient='records')
+        return df
     
     def write_data(self, data):
         if data == "o":
@@ -105,23 +105,20 @@ class Data_getter():
             with open(self.filename, 'w') as f:
                 json.dump(data, f, indent=2)
 
-    def write_data_in_chunks(self, month_dict):
+    def write_data_in_chunks(self, month_df):
         try: 
-            with open(self.filename, 'r') as f:
-                file_json = json.load(f)
-        except: 
-            print('file is empty')
-            pass
+            file_df = pd.read_parquet(self.filename)
+        except Exception as err: 
+            print(err)
 
-        with open(self.filename, 'w') as f:
-            try:
-                month_dict = json.loads(month_dict)
-                file_json = file_json+month_dict
-            except Exception as err:
-                print(err)
-                file_json = month_dict
 
-            json.dump(file_json, f, indent = 2)
+        try:
+            file_df = pd.concat([file_df,month_df])
+        except Exception as err:
+            print(err)
+            file_df = month_df
+        file_df.to_parquet(self.filename)
+            
 
 
 
@@ -153,7 +150,7 @@ class Data_getter():
             dates[date] = pd.to_datetime(dates[date],format="%d/%m/%Y")
 
         self.listDates.append([date.strftime('%d/%m/%Y') for date in dates])
-        # Loops over the dates until it gets to the dateEnd and adds them to self.listDates in the format dd/mm/YYYY
+        # Loops over the dates until it gets to the dateEnd and adds them to self.listDates in the format dd/mm/YYYY  # noqa: E501
         while dates[-1] < dateEnd:
             print(f"{dates[-1]} is smaller than {dateEnd}")
             for date in range(len(dates)):
@@ -185,7 +182,7 @@ class Data_getter():
 
     # this method is only to be for round flights as of 2/3/2023
     def using_threads2(self, max_workers, dateStart=None, dateEnd=None, period=16,nights_in_dst=None, max = 1):
-        self.return_dates(dateStart=dateStart, dateEnd=dateEnd, period=period, nights_in_dst=nights_in_dst)
+        self.return_dates(dateStart=dateStart, dateEnd=dateEnd, period=period, nights_in_dst=nights_in_dst)  
 
         count = 1
         #looping_over = int(len(self.listDates)/max) + (len(self.listDates)%max_workers>0)
@@ -197,7 +194,7 @@ class Data_getter():
             worker_count =0
             
             while dateidx < len(self.listDates):
-                # The variable max makes sure that only a certain number of API calls can be done before the dictionaries with data have to be written to a file 
+                # The variable max makes sure that only a certain number of API calls can be done before the dictionaries with data have to be written to a file   # noqa: E501
                 if worker_count<max*max_workers:
                     worker_count += 1
                     worker_list.append(executor.submit(self.middle_man, date=self.listDates[dateidx]))
@@ -208,12 +205,12 @@ class Data_getter():
                     worker_count +=1 
                 if worker_count>max*max_workers or dateidx == len(self.listDates):
                     for future in concurrent.futures.as_completed(worker_list):
-                        temp_dict= future.result()
-                        if temp_dict == None:
+                        temp_df= future.result()
+                        if temp_df is None:
                             print('Temp dict is empty')
                         else:
 
-                            self.write_data_in_chunks(month_dict=temp_dict)
+                            self.write_data_in_chunks(month_df=temp_df)
 
                     print(f"We have written to the file {count} times")
                     count += 1
