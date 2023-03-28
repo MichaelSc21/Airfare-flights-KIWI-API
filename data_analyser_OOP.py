@@ -2,7 +2,10 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import os
+from importlib import reload
 import API_details
+reload(API_details)
 from scipy.optimize import curve_fit, leastsq
 from mplcursors import cursor
 import plotly.express as px
@@ -12,7 +15,7 @@ import plotly.graph_objects as go
 class big_df():
     def __init__(self, filename, payload = None, filter_data_bool = False): 
         self.filename = filename
-        self.df = pd.read_json(self.filename)
+        self.df = pd.read_parquet(self.filename)
         self.payload = payload
         if filter_data_bool == True:
             self.filter_data()
@@ -90,7 +93,7 @@ class small_df():
         self.payload = payload
         self.filename = filename
         self.small_df_filename = self.filename[:-5] + '_small_df' + '.json'
-        self.file_graph_plotly = API_details.FILE_GRAPH_PLOTLY
+        self.file_graph_plotly = os.path.join(API_details.FILE_GRAPH_PLOTLY)
 
     def sinfunc(self,x, a, w, p):
         return a * np.sin(x*w+p)
@@ -193,7 +196,7 @@ class small_df():
         fig = px.scatter(self.df, x=self.x, y=self.y)
         
         fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
-        fig.write_html('D:\COding\Python\Python web scraping\Flight tickets\Airfare-flights KIWI API\Graphs\Plotly graphs\Test1 Interactive plot.html')
+        fig.write_html(self.file_graph_plotly)
 
     def plot_polynomial_plotly(self, degree):
         customdata = np.stack((self.df['seats_available']), axis=-1)
@@ -267,7 +270,7 @@ if __name__ == '__main__':
     small_dfs = {}
     for df_name in df_names:
         
-        big_dfs[df_name] = big_df(filename = df_name+'.json', filter_data_bool=True)
+        big_dfs[df_name] = big_df(filename = df_name+'.parquet', filter_data_bool=True)
 
         temp_df = big_dfs[df_name].df
         small_dfs[df_name] = big_dfs[df_name].create_small_df(method = 'quantile', quantile =0.14)
@@ -277,8 +280,7 @@ if __name__ == '__main__':
 
         small_dfs[df_name].plot_polynomial_plotly(12)
         #small_dfs[df_name].write_data_to_file_small_df()
-        small_dfs[df_name].compare_data_small_df()
-        json_df = small_dfs[df_name].load_small_df()
+        #small_dfs[df_name].compare_data_small_df_plotly()
 
 # %%
 """
@@ -294,4 +296,17 @@ Sort out the function that compares one dataframe from the past and one from the
 """
 
 
+# %%
+df  = pd.read_json('LTN_to_IAS_round_small_df.json', orient='records')
+# %%
+df.info(memory_usage='deep')
+# %%
+df.memory_usage(deep=True)
+# %%
+print(df['return_date'].min())
+print(df['return_date'].max())
+# %%
+df['airlines'] = df['airlines'].astype('category')
+# %%
+df.to_parquet('LTN_to_IAS_round.parquet' )
 # %%

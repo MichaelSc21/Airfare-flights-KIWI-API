@@ -92,7 +92,7 @@ if __name__ == '__main__':
         send_from = f"{API_details.EMAIL_USERNAME}@gmail.com", 
         send_to = f"{API_details.EMAIL_RECIPIENT}", 
         subject = 'Third attempt at sending an email',
-        files=[os.path.join('D:/COding/Python/Python web scraping/Flight tickets/Airfare-flights KIWI API/Graphs/Plotly graphs/Test1 Interactive plot.html')],
+        files=[os.path.join(API_details.FILE_GRAPH_PLOTLY)],
         username =  f"{API_details.EMAIL_USERNAME}@gmail.com",
         password = f"{API_details.EMAIL_PASSWORD}",
         message = 'Lets see if this works',
