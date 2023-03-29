@@ -60,8 +60,7 @@ class Data_getter():
             if i['flyTo'] == self.payload['fly_from']:
                 return i['utc_arrival']
     
-    @staticmethod
-    def get_availability(row):
+    def get_availability(self, row):
         return row['seats']
 
     total_elem = 0
@@ -80,8 +79,9 @@ class Data_getter():
         df['departure_date'] = df['route'].apply(lambda row: self.get_departure_date(row))
 
         if self.round == True:
-            df['return_duration'] = df['duration'].apply(lambda row: self.get_return_duration(row))
+            df['return_duration'] = df['duration'].apply(lambda row: self.get_return_duration(row))  # noqa: E501
             df['return_date'] = df['route'].apply(lambda row: self.get_return_date(row))
+        
 
 
         df['routecount'] = df['route'].apply(lambda row: len(row))
@@ -254,7 +254,7 @@ if __name__ == '__main__':
 
     getter = Data_getter(payload, sanitise_data = True, delete_data = True)
 
-    getter.using_threads2(dateStart = '01/04/2023', dateEnd = '31/12/2023', max_workers=2, period = 16, nights_in_dst=7, max = 1)
+    getter.using_threads2(dateStart = '01/04/2023', dateEnd = '01/05/2023', max_workers=2, period = 16, nights_in_dst=7, max = 1)
     # Note: the period that is passed as an argument into the using_threads2 functions should be +1 more compared to the difference between date_from and date_to and the same when looking for round tickets
 
 
