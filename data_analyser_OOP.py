@@ -10,6 +10,7 @@ from scipy.optimize import curve_fit, leastsq
 from mplcursors import cursor
 import plotly.express as px
 import plotly.graph_objects as go
+from datetime import date
 #%matplotlib qt
 
 class big_df():
@@ -40,13 +41,16 @@ class big_df():
     def create_small_df(self, method, quantile=None, ):
         self.method = method
         self.quantile = quantile
-        return small_df(self.df,self.method, self.quantile, self.filename, self.payload)
+        return small_df(big_df =self.df,method = self.method, quantile =self.quantile, filename =self.filename, payload = self.payload)
+    
+    #def compare_data_small_df(self,date)
     
 class small_df():
     def __init__(self, big_df, method, quantile, filename, payload):
+        self.method = method
         self.df = pd.DataFrame(columns=['departure_date', 'price', 'seats_available'])
         unique_dates = big_df['departure_date'].unique()
-        if method == 'mean':
+        if self.method == 'mean':
             for i in range(len(unique_dates)):
                 mean = pd.Series(big_df.loc[unique_dates[i], 'price']).mean()
                 idx = big_df.loc[unique_dates[i], 'price'].gt(mean).argmax()-1
@@ -56,7 +60,7 @@ class small_df():
                     'seats_available': pd.Series(big_df.loc[unique_dates[i], 'seats_available'])[idx]}
                 #print(new_row)
                 self.df.loc[i] = new_row
-        elif method == 'min':
+        elif self.method == 'min':
             for i in range(len(unique_dates)):
                 self.df.loc[i] = pd.Series(big_df.loc[unique_dates[i], 'price']).min()
                 new_row = {
@@ -65,7 +69,7 @@ class small_df():
                     'seats_available': pd.Series(big_df.loc[unique_dates[i], 'seats_available'])[0]}
                 self.df.loc[i] = new_row
 
-        elif method == 'quantile':
+        elif self.method == 'quantile':
             if quantile == None:
                 raise TypeError("The method selected is quantile which means you also need to pass a value for the quantile")
             else: 
@@ -87,7 +91,6 @@ class small_df():
         
         self.big_df = big_df
         self.y = self.df['price']
-        print(self.y)
         self.x = self.df.index
         self.x_line = np.array(self.x.astype(int) / 10**9)
         self.payload = payload
@@ -221,14 +224,14 @@ class small_df():
     def write_data_to_file_small_df(self):
         self.small_df_filename = self.filename[:-5] + '_small_df' + '.json'
         self.df.to_json(orient='split', path_or_buf=self.small_df_filename)
-    def load_small_df(self):
-        self.json_df = pd.read_json(orient='split', path_or_buf=self.small_df_filename)
-        return self.json_df
 
 
-    def compare_data_small_df_plotly(self):
-        self.json_df = pd.read_json(orient='split', path_or_buf=self.small_df_filename)
-        price_change_mask = self.df['price'] - self.json_df['price']
+    def compare_data_small_df_plotly(self, date=None):
+        #self.json_df = pd.read_json(orient='split', path_or_buf=self.small_df_filename)
+        mask = self.big_df['date_added'] == pd.to_datetime(date, format="%d/%m/%Y")
+        self.other_date_df = small_df(big_df=self.big_df[mask],method=self.method, quantile=0.14, payload = self.payload, filename=self.filename).df  # noqa: E501
+        price_change_mask = self.df['price'] - self.other_date_df['price']
+
         colour_series =[]
         price_change_text = []
 
@@ -244,6 +247,7 @@ class small_df():
             elif i < 0:
                 #Price is lower now compared to the last time it was checked
                 i = -i
+
                 colour_series.append('green')
                 price_change_text.append('Price decreased by £'+ str(i))
 
@@ -263,24 +267,41 @@ class small_df():
         fig.write_html(self.file_graph_plotly)
 
 
-# %%
+
 if __name__ == '__main__':
     df_names = ['LTN_to_IAS_round']
     big_dfs = {}
     small_dfs = {}
+    payload={
+    'fly_from': 'LTN',
+    'fly_to': 'IAS',
+    'date_from': '01/04/2023',
+    'date_to': '16/04/2023',
+    'return_from': '08/04/2023',
+    'return_to': '23/04/2023',
+    'nights_in_dst_from': 7,
+    'nights_in_dst_to': 7,
+    'flight_type': 'round',
+    'adults': '4',
+    'curr': 'GBP',
+    'sort':'date',
+    'selected_cabins': 'M',
+    'limit': 1000}
+
     for df_name in df_names:
         
-        big_dfs[df_name] = big_df(filename = df_name+'.parquet', filter_data_bool=True)
-
+        big_dfs[df_name] = big_df(filename = df_name+'.parquet', filter_data_bool=True, payload = payload)
+        
         temp_df = big_dfs[df_name].df
         small_dfs[df_name] = big_dfs[df_name].create_small_df(method = 'quantile', quantile =0.14)
 
         #fig, ax = plt.subplots(figsize = (12, 6))
         df = small_dfs[df_name].df
 
-        small_dfs[df_name].plot_polynomial_plotly(12)
+        #small_dfs[df_name].plot_polynomial_plotly(12)
         #small_dfs[df_name].write_data_to_file_small_df()
-        #small_dfs[df_name].compare_data_small_df_plotly()
+        other_date_df = small_dfs[df_name].load_small_df()
+        small_dfs[df_name].compare_data_small_df_plotly(date='30/03/2023')
 
 # %%
 """
@@ -290,23 +311,13 @@ Sort out the fourier curve fitting
 
 """
 """
-TO DO as of 17/3/2023:
-Sort out the function that compares one dataframe from the past and one from the present
+TO DO as of 30/3/2023:
+Sort out the function that compares one dataframe from the past and one from the present;
+Make sure that they line up on the dates
 
 """
-
-
-# %%
-df  = pd.read_json('LTN_to_IAS_round_small_df.json', orient='records')
-# %%
-df.info(memory_usage='deep')
-# %%
-df.memory_usage(deep=True)
-# %%
-print(df['return_date'].min())
-print(df['return_date'].max())
-# %%
-df['airlines'] = df['airlines'].astype('category')
-# %%
-df.to_parquet('LTN_to_IAS_round.parquet' )
+# %% 
+date = '30/03/2023'
+print(pd.to_datetime(date, format="%d/%m/%Y"))
+print(pd.to_datetime('today'))
 # %%
