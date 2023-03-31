@@ -72,7 +72,7 @@ class Data_getter():
             print(err)
             print(data)
 
-        usecols = ['id', 'quality', 'price', 'airlines', 'departure_duration','return_duration', 'routecount', 'departure_date', 'return_date', 'seats_available']
+        usecols = ['id', 'date_added', 'quality', 'price', 'airlines', 'departure_duration','return_duration', 'routecount', 'departure_date', 'return_date', 'seats_available']
 
         df = pd.DataFrame.from_dict(data)
         df['departure_duration'] = df['duration'].apply(lambda row: self.get_departure_duration(row))
@@ -83,7 +83,8 @@ class Data_getter():
             df['return_date'] = df['route'].apply(lambda row: self.get_return_date(row))
         
 
-
+        df['date_added'] = pd.to_datetime('today')
+        df['date_added'] = df['date_added'].dt.date
         df['routecount'] = df['route'].apply(lambda row: len(row))
         df['seats_available'] = df['availability'].apply(lambda row: self.get_availability(row))
         self.__class__.total_elem += df['price'].size
