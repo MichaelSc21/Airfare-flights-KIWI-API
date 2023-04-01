@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import os
 from importlib import reload
-import API_details
+import Getting_data.API_details as API_details
 reload(API_details)
 from scipy.optimize import curve_fit, leastsq
 from mplcursors import cursor

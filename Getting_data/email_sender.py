@@ -1,6 +1,6 @@
 # %%
 from importlib import reload
-import API_details
+import Getting_data.API_details as API_details
 reload(API_details)
 import os
 import smtplib
