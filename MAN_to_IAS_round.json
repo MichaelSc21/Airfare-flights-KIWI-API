@@ -1,4 +1,0 @@
-{
-  "status": "Bad Request",
-  "error": "couldn't validate request parameters: [both fields return_from and return_to need to be specified,\n\t\t\t                   but got only one when roundtrip requested, then return dates or nights in destination params should be requested]"
-}
