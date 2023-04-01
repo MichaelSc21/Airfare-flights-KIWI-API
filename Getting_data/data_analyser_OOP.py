@@ -1,23 +1,41 @@
 # %%
+import sys 
+import os
+sys.path.insert(0,'D:\OneDrive\Coding\A-level\Airfare-flights KIWI API')
+os.chdir(sys.path[0])
+import Getting_data.API_details as API_details
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import os
 from importlib import reload
-import Getting_data.API_details as API_details
+
+
+import json
+
 reload(API_details)
 from scipy.optimize import curve_fit, leastsq
 from mplcursors import cursor
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import date
+import plotly
 #%matplotlib qt
 
+current_dir = os.getcwd()
+print("Current working directory in data_analyser_OOP:", current_dir)
+
 class big_df():
-    def __init__(self, filename, payload = None, filter_data_bool = False): 
-        self.filename = filename
+    def __init__(self, filename=None, payload = None, filter_data_bool = False): 
+        if payload != None:
+            self.payload = payload
+            self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}.parquet"  # noqa: E501
+            self.filename = os.path.join(API_details.DIR_DATA, self.filename)
+        else:
+
+            self.filename = os.path.join(API_details.DIR_DATA, filename)
         self.df = pd.read_parquet(self.filename)
-        self.payload = payload
+
         if filter_data_bool == True:
             self.filter_data()
 
@@ -96,7 +114,7 @@ class small_df():
         self.payload = payload
         self.filename = filename
         self.small_df_filename = self.filename[:-5] + '_small_df' + '.json'
-        self.file_graph_plotly = os.path.join(API_details.FILE_GRAPH_PLOTLY)
+        self.file_graph_plotly = os.path.join(API_details.DIR_GRAPH, API_details.FILE_GRAPH_PLOTLY)
 
     def sinfunc(self,x, a, w, p):
         return a * np.sin(x*w+p)
@@ -220,6 +238,7 @@ class small_df():
 
         fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
         fig.write_html(self.file_graph_plotly)
+        self.fig = fig
 
     def write_data_to_file_small_df(self):
         self.small_df_filename = self.filename[:-5] + '_small_df' + '.json'
@@ -265,6 +284,11 @@ class small_df():
         fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
         fig.update_traces(marker=dict(color=colour_series))
         fig.write_html(self.file_graph_plotly)
+        self.fig = fig
+
+    def return_json(self):
+        self.json_file_plotly_graph = json.dumps(self.fig, cls = plotly.utils.PlotlyJSONEncoder)
+        return self.json_file_plotly_graph
 
 
 
@@ -298,10 +322,9 @@ if __name__ == '__main__':
         #fig, ax = plt.subplots(figsize = (12, 6))
         df = small_dfs[df_name].df
 
-        #small_dfs[df_name].plot_polynomial_plotly(12)
+        small_dfs[df_name].plot_polynomial_plotly(12)
         #small_dfs[df_name].write_data_to_file_small_df()
-        other_date_df = small_dfs[df_name].load_small_df()
-        small_dfs[df_name].compare_data_small_df_plotly(date='30/03/2023')
+        #small_dfs[df_name].compare_data_small_df_plotly(date='30/03/2023')
 
 # %%
 """
