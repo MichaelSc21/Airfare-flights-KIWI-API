@@ -3,7 +3,7 @@ from importlib import reload
 import Getting_data.data_getter_OOP as data_getter_OOP
 import Getting_data.data_analyser_OOP as data_analyser_OOP 
 import Getting_data.email_sender as email_sender
-import API_details
+import Getting_data.API_details as API_details
 import time
 reload(data_getter_OOP)
 reload(data_analyser_OOP)

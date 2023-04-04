@@ -7,7 +7,7 @@ import pandas as pd
 import concurrent.futures
 import API_details
 import time
-
+import os
 
 
 class Data_getter():
@@ -21,6 +21,7 @@ class Data_getter():
             self.round = True
 
         self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}.parquet"
+        self.filename = os.path.join(API_details.DIR_DATA, self.filename)
         self.sanitise = sanitise_data
         self.delete_data = delete_data
         if self.delete_data:
