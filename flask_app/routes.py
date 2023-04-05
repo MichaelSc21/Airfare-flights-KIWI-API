@@ -1,6 +1,6 @@
 # %%
 from flask_app import app
-from flask import render_template
+from flask import render_template, request
 
 import sys 
 sys.path.insert(0, 'D:\OneDrive\Coding\A-level\Airfare-flights KIWI API')
@@ -39,6 +39,31 @@ def chart1():
 
 
     return render_template('chart1.html', json_graph1 = json_graph1)
+
+
+@app.route('/form', methods=['GET', 'POST'])
+def payload_form():
+    payload={
+    'fly_from': 'LTN',
+    'fly_to': 'IAS',
+    'date_from': '01/04/2023',
+    'date_to': '16/04/2023',
+    'return_from': '08/04/2023',
+    'return_to': '23/04/2023',
+    'nights_in_dst_from': 7,
+    'nights_in_dst_to': 7,
+    'flight_type': 'round',
+    'adults': '4',
+    'curr': 'GBP',
+    'sort':'date',
+    'selected_cabins': 'M',
+    'limit': 1000}
+    if request.method == 'POST':
+        payload = request.form.to_dict()
+        
+        return "Thanks for submitting the form, {}!".format(payload)
+    else:
+        return render_template('payload_form.html', payload_format=payload)
 
 
 # %%
