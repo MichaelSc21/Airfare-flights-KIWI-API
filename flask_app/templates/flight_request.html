@@ -1,0 +1,105 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flight Search Form</title>
+    <!-- Include the Bootstrap CSS file for styling -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Flight Search Form</h1>
+        <form method="post" action="{{ url_for('flight_request') }}">
+            {{ form.csrf_token }}
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="{{ form.fly_from.id }}">From</label>
+                    {{ form.fly_from(class="form-control", placeholder="Enter city or airport") }}
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="{{ form.fly_to.id }}">To</label>
+                    {{ form.fly_to(class="form-control", placeholder="Enter city or airport") }}
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="{{ form.flight_type.id}}">{{ form.flight_type.label }}</label>
+                    {{ form.flight_type(class = "form-control", id='flight_type')}}
+                </div>
+            </div>
+
+
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                    <label for="{{ form.date_from.id }}">Fepart from date</label>
+                    {{ form.date_from(class="form-control", placeholder="MM/DD/YYYY") }}
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="{{ form.return_from.id }}">Return from date</label>
+                    {{ form.return_from(class="form-control", placeholder="MM/DD/YYYY", id='return_from') }}
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="{{ form.nights_in_dst_from.id }}">nights_in_dst_from</label>
+                    {{ form.nights_in_dst_from(class="form-control") }}
+                </div>
+            </div>
+
+
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                    <label for="{{ form.date_to.id }}">Depart to date</label>
+                    {{ form.date_to(class="form-control", placeholder="MM/DD/YYYY") }}
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="{{ form.return_to.id }}">Return to date</label>
+                    {{ form.return_to(class="form-control", placeholder="MM/DD/YYYY", id='return_to') }}
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="{{ form.nights_in_dst_to.id }}">nights_in_dst_to</label>
+                    {{ form.nights_in_dst_to(class="form-control") }}
+                </div>
+            </div>
+
+
+            <div class="form-row">
+                <div class="form-group col-md-2">
+                    <label for="{{ form.adults.id }}">Adults</label>
+                    {{ form.adults(class="form-control") }}
+                </div>
+                <div class="form-group col-md-2">
+                    <label for="{{ form.selected_cabins.id }}">Class</label>
+                    {{ form.selected_cabins(class="form-control") }}
+                </div>
+                <div class="form-group col-md-2">
+                    <label for="{{ form.curr.id }}">Currency</label>
+                    {{ form.curr(class="form-control") }}
+                </div>
+            </div>
+
+
+
+
+
+            <button type="submit" class="btn btn-primary">Search Flights</button>
+        </form>
+    </div>
+    <script>
+        // Get the flight type select element and return to input element
+        var flightTypeSelect = document.getElementById('flight_type');
+        var returnToInput = document.getElementById('return_from');
+        
+        // Add event listener to flight type select element
+        flightTypeSelect.addEventListener('change', function() {
+            // If flight type is round, show return to input element, else hide it
+            if (flightTypeSelect.value === 'round') {
+                returnToInput.style.display = 'block';
+            } else {
+                returnToInput.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
+
+{% endblock %}
