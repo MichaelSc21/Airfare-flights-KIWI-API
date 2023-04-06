@@ -1,20 +1,16 @@
-# %%
-from flask_app import app
-from flask import render_template, request
-
 import sys 
 sys.path.insert(0, 'D:\OneDrive\Coding\A-level\Airfare-flights KIWI API')
 import os
 #sys.path.insert(0, 'D:\OneDrive\Coding\A-level\Airfare-flights KIWI API\Getting_data')
 from Getting_data.data_analyser_OOP import *
+import Getting_data.API_details as API_details
+
+from flask_wtf.csrf import CSRFProtect
+from flask_app.forms import FlightRequestForm
+from flask_app import app
+from flask import render_template, request
 
 
-
-html_graph = os.path.abspath('../../Graphs/Plotly graphs/HTML_graph.html')
-
-current_dir = os.getcwd()
-
-print("Current working directory in routes.py:", current_dir)
 
 @app.route('/chart1')
 def chart1():
@@ -65,5 +61,23 @@ def payload_form():
     else:
         return render_template('payload_form.html', payload_format=payload)
 
+app.secret_key = API_details.FORMS_KEY  # Set your own secret key for Flask app
+csrf = CSRFProtect(app)
 
+
+@app.route('/flight_request', methods=['GET', 'POST'])
+def flight_request():
+    form = FlightRequestForm()
+    if form.validate_on_submit():
+        # Access form data using form.field_name.data
+        fly_from = form.fly_from.data
+        fly_to = form.fly_to.data
+        # Extract other form data in a similar manner
+        
+        # Process the form data and make the flight request
+        # ...
+
+        # Redirect to another page or return a response
+        return 'Form submitted successfully!'
+    return render_template('flight_request.html', form=form)
 # %%
