@@ -35,13 +35,13 @@
                     <label for="{{ form.date_from.id }}">Depart from date</label>
                     {{ form.date_from(class="form-control", placeholder="MM/DD/YYYY") }}
                 </div>
-                <div class="form-group col-md-3 disappear">
+                <div class="form-group col-md-3 ">
                     <label for="{{ form.return_from.id }}", class="return_from">Return from date</label>
-                    {{ form.return_from(class="form-control return_from", placeholder="MM/DD/YYYY") }}
+                    {{ form.return_from(class="form-control return_from disappear", placeholder="MM/DD/YYYY") }}
                 </div>
-                <div class="form-group col-md-3 disappear">
+                <div class="form-group col-md-3 ">
                     <label for="{{ form.nights_in_dst_from.id }}", class="nights_in_dst_from">nights_in_dst_from</label>
-                    {{ form.nights_in_dst_from(class="form-control nights_in_dst_from") }}
+                    {{ form.nights_in_dst_from(class="form-control nights_in_dst_from disappear") }}
                 </div>
             </div>
 
@@ -51,13 +51,13 @@
                     <label for="{{ form.date_to.id }}", class="date_to">Depart to date</label>
                     {{ form.date_to(class="form-control date_to", placeholder="MM/DD/YYYY") }}
                 </div>
-                <div class="form-group col-md-3 disappear">
+                <div class="form-group col-md-3 ">
                     <label for="{{ form.return_to.id }}", class="return_to">Return to date</label>
-                    {{ form.return_to(class="form-control return_to", placeholder="MM/DD/YYYY") }}
+                    {{ form.return_to(class="form-control return_to disappear" , placeholder="MM/DD/YYYY") }}
                 </div>
-                <div class="form-group col-md-3 disappear">
+                <div class="form-group col-md-3 ">
                     <label for="{{ form.nights_in_dst_to.id }}", class="nights_in_dst_to">nights_in_dst_to</label>
-                    {{ form.nights_in_dst_to(class="form-control nights_in_dst_to") }}
+                    {{ form.nights_in_dst_to(class="form-control nights_in_dst_to disappear") }}
                 </div>
             </div>
 
@@ -77,11 +77,13 @@
                 </div>
             </div>
             <!-----------------------------------------------THE FIELDS TO MAKE DISAPPEAR ARE HERE---------------------------------------------->
+            <div class="form-row">  
+                {{ form.submit(class="btn btn-primary") }}
+
+            </div>
 
 
 
-
-            <button type="submit" class="btn btn-primary">Search Flights</button>
         </form>
     </div>
 
@@ -123,12 +125,13 @@
             document.getElementsByClassName("nights_in_dst_to").value = "";
         }
     </script>
-    -->
+--
+
     <script>
         var inputFields = document.querySelectorAll('[class*="disappear"]'); 
         for (var i = 0; i < inputFields.length; i++) {
                         var inputField = inputFields[i];
-                        inputField.style.display = 'none'
+                        inputField.style.display = 'none';
                     };
         document.querySelector('[class*="flight_type"]').addEventListener("change", function() {
                 // Get selected flight type
@@ -138,17 +141,19 @@
                 if (flightType === "One-way") {
                     for (var i = 0; i < inputFields.length; i++) {
                         var inputField = inputFields[i];
-                        inputField.style.display = 'none'
+                        inputField.style.display = 'none';
                     };
                 } else if (flightType === 'Round') {
                     for (var i = 0; i < inputFields.length; i++) {
                         var inputField = inputFields[i];
-                        inputField.style.display = 'block'
+                        inputField.style.display = 'block';
                     };
-                };
+                };  
             });
 
     </script>
+-->
+    <script src="{{ url_for('static',filename = 'flight_request.js') }}"></script>
 </body>
 </html>
 

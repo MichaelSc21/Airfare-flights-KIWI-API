@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, IntegerField, SelectField
+from wtforms import StringField, IntegerField, SelectField, SubmitField
 from wtforms.validators import InputRequired, Length, NumberRange
 
 class FlightRequestForm(FlaskForm):
@@ -21,3 +21,4 @@ class FlightRequestForm(FlaskForm):
                                            ('C', 'C (Business Class)'), 
                                            ('F', 'F (First Class)')], validators=[InputRequired()])
     limit = IntegerField('Limit', validators=[NumberRange(min=0)])
+    submit = SubmitField('Submit')
