@@ -1,7 +1,7 @@
 # %%
 import sys 
 import os
-sys.path.insert(0,'D:\OneDrive\Coding\A-level\Airfare-flights KIWI API')
+#sys.path.insert(0,'D:\OneDrive\Coding\A-level\Airfare-flights KIWI API')
 os.chdir(sys.path[0])
 import Getting_data.API_details as API_details
 
