@@ -11,9 +11,13 @@ class FlightRequestForm(FlaskForm):
     return_to = StringField('Return To', validators=[InputRequired()])
     nights_in_dst_from = IntegerField('Nights in Destination (From)', validators=[NumberRange(min=0)])
     nights_in_dst_to = IntegerField('Nights in Destination (To)', validators=[NumberRange(min=0)])
-    flight_type = SelectField('Flight Type', choices=[('one-way', 'One-way'), ('round', 'Round')], validators=[InputRequired()])
+    flight_type = SelectField('Flight Type', choices=[('One-way'), ('Round')], validators=[InputRequired()])
     adults = StringField('Number of Adults', validators=[InputRequired()])
     curr = StringField('Currency', validators=[InputRequired(), Length(max=3)])
     sort = StringField('Sort', validators=[InputRequired()])
-    selected_cabins = StringField('Selected Cabins', validators=[InputRequired(), Length(max=1)])
+    selected_cabins = SelectField('Selected Cabins', 
+                                  choices=[('M', 'M (Economy Class)'), 
+                                           ('W', 'W (Economy Premium)'), 
+                                           ('C', 'C (Business Class)'), 
+                                           ('F', 'F (First Class)')], validators=[InputRequired()])
     limit = IntegerField('Limit', validators=[NumberRange(min=0)])
