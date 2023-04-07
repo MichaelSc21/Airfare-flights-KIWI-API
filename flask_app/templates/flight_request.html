@@ -25,39 +25,39 @@
                 </div>
                 <div class="form-group col-md-4">
                     <label for="{{ form.flight_type.id}}">{{ form.flight_type.label }}</label>
-                    {{ form.flight_type(class = "form-control", id='flight_type')}}
+                    {{ form.flight_type(class = "form-control flight_type")}}
                 </div>
             </div>
 
-
+            <!-----------------------------------------------THE FIELDS TO MAKE DISAPPEAR ARE HERE---------------------------------------------->
             <div class="form-row">
                 <div class="form-group col-md-3">
-                    <label for="{{ form.date_from.id }}">Fepart from date</label>
+                    <label for="{{ form.date_from.id }}">Depart from date</label>
                     {{ form.date_from(class="form-control", placeholder="MM/DD/YYYY") }}
                 </div>
-                <div class="form-group col-md-3">
-                    <label for="{{ form.return_from.id }}">Return from date</label>
-                    {{ form.return_from(class="form-control", placeholder="MM/DD/YYYY", id='return_from') }}
+                <div class="form-group col-md-3 disappear">
+                    <label for="{{ form.return_from.id }}", class="return_from">Return from date</label>
+                    {{ form.return_from(class="form-control return_from", placeholder="MM/DD/YYYY") }}
                 </div>
-                <div class="form-group col-md-3">
-                    <label for="{{ form.nights_in_dst_from.id }}">nights_in_dst_from</label>
-                    {{ form.nights_in_dst_from(class="form-control") }}
+                <div class="form-group col-md-3 disappear">
+                    <label for="{{ form.nights_in_dst_from.id }}", class="nights_in_dst_from">nights_in_dst_from</label>
+                    {{ form.nights_in_dst_from(class="form-control nights_in_dst_from") }}
                 </div>
             </div>
 
 
             <div class="form-row">
                 <div class="form-group col-md-3">
-                    <label for="{{ form.date_to.id }}">Depart to date</label>
-                    {{ form.date_to(class="form-control", placeholder="MM/DD/YYYY") }}
+                    <label for="{{ form.date_to.id }}", class="date_to">Depart to date</label>
+                    {{ form.date_to(class="form-control date_to", placeholder="MM/DD/YYYY") }}
                 </div>
-                <div class="form-group col-md-3">
-                    <label for="{{ form.return_to.id }}">Return to date</label>
-                    {{ form.return_to(class="form-control", placeholder="MM/DD/YYYY", id='return_to') }}
+                <div class="form-group col-md-3 disappear">
+                    <label for="{{ form.return_to.id }}", class="return_to">Return to date</label>
+                    {{ form.return_to(class="form-control return_to", placeholder="MM/DD/YYYY") }}
                 </div>
-                <div class="form-group col-md-3">
-                    <label for="{{ form.nights_in_dst_to.id }}">nights_in_dst_to</label>
-                    {{ form.nights_in_dst_to(class="form-control") }}
+                <div class="form-group col-md-3 disappear">
+                    <label for="{{ form.nights_in_dst_to.id }}", class="nights_in_dst_to">nights_in_dst_to</label>
+                    {{ form.nights_in_dst_to(class="form-control nights_in_dst_to") }}
                 </div>
             </div>
 
@@ -76,7 +76,7 @@
                     {{ form.curr(class="form-control") }}
                 </div>
             </div>
-
+            <!-----------------------------------------------THE FIELDS TO MAKE DISAPPEAR ARE HERE---------------------------------------------->
 
 
 
@@ -84,20 +84,70 @@
             <button type="submit" class="btn btn-primary">Search Flights</button>
         </form>
     </div>
+
+    <!--
     <script>
-        // Get the flight type select element and return to input element
-        var flightTypeSelect = document.getElementById('flight_type');
-        var returnToInput = document.getElementById('return_from');
-        
-        // Add event listener to flight type select element
-        flightTypeSelect.addEventListener('change', function() {
-            // If flight type is round, show return to input element, else hide it
-            if (flightTypeSelect.value === 'round') {
-                returnToInput.style.display = 'block';
-            } else {
-                returnToInput.style.display = 'none';
-            }
+        document.addEventListener("DOMContentLoaded", function() {
+            // Hide return date and nights in destination fields initially
+            document.getElementsByClassName("return_to").style.display = "none";
+            document.getElementsByClassName("return_from").style.display = "none";
+
+            document.getElementsByClassName("nights_in_dst_from").style.display = "none";
+            document.getElementsByClassName("nights_in_dst_to").style.display = "none";
+
+            // Event handler for flight type selection
+            document.getElementByClassName("flight_type").addEventListener("change", function() {
+                // Get selected flight type
+                var flightType = this.value;
+
+                // Toggle visibility of return date and nights in destination fields
+                if (flightType === "One-way") {
+                    document.getElementsByClassName("return_from").style.display = "none";
+                    document.getElementsByClassName("return_to").style.display = "none";
+                    document.getElementsByClassName("nights_in_dst_from").style.display = "none";
+                    document.getElementsByClassName("nights_in_dst_to").style.display = "none";
+                } else if (flightType === 'Round') {
+                    document.getElementsByClassName("return_from").style.display = "block";
+                    document.getElementsByClassName("return_to").style.display = "block";
+                    document.getElementsByClassName("nights_in_dst_from").style.display = "block";
+                    document.getElementsByClassName("nights_in_dst_to").style.display = "block";
+                }
+            });
         });
+
+        // Function to reset form fields when flight type is changed
+        function resetFormFields() {
+            document.getElementsByClassName("return_from").value = "";
+            document.getElementsByClassName("return_to").value = "";
+            document.getElementsByClassName("nights_in_dst_from").value = "";
+            document.getElementsByClassName("nights_in_dst_to").value = "";
+        }
+    </script>
+    -->
+    <script>
+        var inputFields = document.querySelectorAll('[class*="disappear"]'); 
+        for (var i = 0; i < inputFields.length; i++) {
+                        var inputField = inputFields[i];
+                        inputField.style.display = 'none'
+                    };
+        document.querySelector('[class*="flight_type"]').addEventListener("change", function() {
+                // Get selected flight type
+                var flightType = this.value;
+
+                // Toggle visibility of return date and nights in destination fields
+                if (flightType === "One-way") {
+                    for (var i = 0; i < inputFields.length; i++) {
+                        var inputField = inputFields[i];
+                        inputField.style.display = 'none'
+                    };
+                } else if (flightType === 'Round') {
+                    for (var i = 0; i < inputFields.length; i++) {
+                        var inputField = inputFields[i];
+                        inputField.style.display = 'block'
+                    };
+                };
+            });
+
     </script>
 </body>
 </html>
