@@ -3,8 +3,8 @@ from wtforms import StringField, IntegerField, SelectField, SubmitField
 from wtforms.validators import InputRequired, Length, NumberRange, Optional
 
 
-class RequiredUnless(InputRequired):
-    def __init__(self, other_field_name, values, message=None):
+class RequiredUnless(InputRequired, NumberRange):
+    def __init__(self, other_field_name, values, message=None, min=None):
         self.other_field_name = other_field_name
         self.values = values
         self.message = message
@@ -17,11 +17,13 @@ class RequiredUnless(InputRequired):
         # If flight_type is round(so if it is not in values), then this field is required
         print('It got all the way here')
         if other_field_value not in self.values: 
-            Optional().__call__(form, field)
-            
+            if min!=None:
+                super(NumberRange, self).__call__(form, field, min=0)
+            else:
+                super(InputRequired, self).__call__(form, field)
         # If this flight_type is one-way, then this field is optional
         else:
-            super(RequiredUnless, self).__call__(form, field)
+            Optional().__call__(form, field)
 
 
 
@@ -32,10 +34,10 @@ class FlightRequestForm(FlaskForm):
     date_from = StringField('Date From', validators=[InputRequired()])
     date_to = StringField('Date To', validators=[InputRequired()])
 
-    return_from = StringField('Return From', validators=[RequiredUnless('flight_type', 'One-way'), InputRequired()])  # noqa: E501
-    return_to = StringField('Return To', validators=[RequiredUnless('flight_type', 'One-way'), InputRequired()])  # noqa: E501
-    nights_in_dst_from = IntegerField('Nights in Destination (From)', validators=[RequiredUnless('flight_type', 'One-way'), NumberRange(min=0)])  # noqa: E501
-    nights_in_dst_to = IntegerField('Nights in Destination (To)', validators=[RequiredUnless('flight_type', 'One-way'), NumberRange(min=0)])  # noqa: E501
+    return_from = StringField('Return From', validators=[RequiredUnless('flight_type', 'One-way')])  # noqa: E501
+    return_to = StringField('Return To', validators=[RequiredUnless('flight_type', 'One-way')])  # noqa: E501
+    nights_in_dst_from = IntegerField('Nights in Destination (From)', validators=[RequiredUnless('flight_type', 'One-way', min=0)])  # noqa: E501
+    nights_in_dst_to = IntegerField('Nights in Destination (To)', validators=[RequiredUnless('flight_type', 'One-way', min=0)])  # noqa: E501
 
     flight_type = SelectField('Flight Type', choices=[('One-way'), ('Round')], validators=[InputRequired()])
     adults = StringField('Number of Adults', validators=[InputRequired()])
