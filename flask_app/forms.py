@@ -3,24 +3,28 @@ from wtforms import StringField, IntegerField, SelectField, SubmitField
 from wtforms.validators import InputRequired, Length, NumberRange, Optional
 
 
-class RequiredUnless(InputRequired, NumberRange):
+class RequiredUnless(InputRequired):
     def __init__(self, other_field_name, values, message=None, min=None):
         self.other_field_name = other_field_name
         self.values = values
         self.message = message
-
+        self.min = min
+        
 
     def __call__(self, form, field):
         other_field_value = form[self.other_field_name].data
         if other_field_value is None:
             raise Exception('no field named "%s" in form' % self.other_field)
+        
         # If flight_type is round(so if it is not in values), then this field is required
         print('It got all the way here')
         if other_field_value not in self.values: 
-            if min!=None:
-                super(NumberRange, self).__call__(form, field, min=0)
+            if self.min!=None:
+                self.number_range = NumberRange(min=self.min)
+                self.number_range.__call__(form, field)
             else:
-                super(InputRequired, self).__call__(form, field)
+                self.stringrequired = InputRequired()
+                self.stringrequired.__call__(form, field)
         # If this flight_type is one-way, then this field is optional
         else:
             Optional().__call__(form, field)
