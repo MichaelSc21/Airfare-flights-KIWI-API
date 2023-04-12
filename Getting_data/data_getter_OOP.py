@@ -1,17 +1,22 @@
 # %%
 import requests
 import json
-import sys
-import matplotlib.pyplot as plt
+import sqlite3
 import pandas as pd
 import concurrent.futures
 import API_details
 import time
 import os
-
+import sys
+import datetime
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0,parent_dir)
+os.chdir(sys.path[0])
+print(os.getcwd())
 
 class Data_getter():
-    def __init__(self, payload, sanitise_data=False, delete_data = False):
+    def __init__(self, payload, sanitise_data=False, delete_data = False, dateStart=None, dateEnd=None):  # noqa: E501
         self.payload = payload
         if payload['flight_type'] == 'oneway':
             self.oneway = True
@@ -19,14 +24,15 @@ class Data_getter():
         else:
             self.oneway = False
             self.round = True
-
-        self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}.parquet"
+        self.dateStart = dateStart
+        self.dateEnd = dateEnd
+        self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}_{self.dateStart}_to_{self.dateEnd}.parquet"
         self.filename = os.path.join(API_details.DIR_DATA, self.filename)
         self.sanitise = sanitise_data
         self.delete_data = delete_data
         if self.delete_data:
             self.write_data("o")
-
+        self.insert_into_database()
 
     def get_data(self):
         url  = "https://api.tequila.kiwi.com/v2/search?"
@@ -182,13 +188,32 @@ class Data_getter():
 
         return temp_dict
 
+    def insert_into_database(self):
+        conn = sqlite3.connect('Data/Departure and destination.db')
+        current_time = datetime.datetime.now()
+        self.time_when_added = str(datetime.datetime.now())
+        conn.execute('''
+            INSERT INTO date_checked(date, depart_dest, filename)
+            VALUES(?, ?, ?)
+        ''', (self.time_when_added, 
+              f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}",
+              self.filename))
+        print('got to here')
+        depart_dest = f"""{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}"""
+        conn.execute('''
+            INSERT INTO departure_destination_flight(id)
+            VALUES(?)
+        ''', (depart_dest,))
+        conn.commit()
+        conn.close()
+
+
     # this method is only to be for round flights as of 2/3/2023
     def using_threads2(self, max_workers, dateStart=None, dateEnd=None, period=16,nights_in_dst=None, max = 1):
-        self.return_dates(dateStart=dateStart, dateEnd=dateEnd, period=period, nights_in_dst=nights_in_dst)  
-
+        self.insert_into_database(self)
+        self.return_dates(dateStart=self.dateStart, dateEnd=self.dateEnd, period=period, nights_in_dst=nights_in_dst)
         count = 1
         #looping_over = int(len(self.listDates)/max) + (len(self.listDates)%max_workers>0)
-        
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             dateidx= 0
             #for i in range(looping_over):
@@ -229,10 +254,10 @@ if __name__ == '__main__':
     payload={
     'fly_from': 'LTN',
     'fly_to': 'IAS',
-    'date_from': '01/04/2023',
-    'date_to': '16/04/2023',
-    'return_from': '08/04/2023',
-    'return_to': '23/04/2023',
+    'date_from': '01/05/2023',
+    'date_to': '16/05/2023',
+    'return_from': '08/12/2023',
+    'return_to': '23/12/2023',
     'nights_in_dst_from': 7,
     'nights_in_dst_to': 7,
     'flight_type': 'round',
@@ -254,9 +279,16 @@ if __name__ == '__main__':
     'selected_cabins': 'M',
     'limit':1000}
 
-    getter = Data_getter(payload, sanitise_data = True, delete_data = True)
+    getter = Data_getter(payload, 
+                         sanitise_data = True, 
+                         delete_data = False,
+                         dateStart = '01/04/2023',
+                         dateEnd = '01/05/2023')
 
-    getter.using_threads2(dateStart = '01/04/2023', dateEnd = '01/05/2023', max_workers=2, period = 16, nights_in_dst=7, max = 1)
+    #getter.using_threads2(max_workers=2, 
+    #                      period = 16, 
+    #                      nights_in_dst=7, 
+    #                      max = 1)
     # Note: the period that is passed as an argument into the using_threads2 functions should be +1 more compared to the difference between date_from and date_to and the same when looking for round tickets
 
 
