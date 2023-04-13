@@ -9,8 +9,13 @@ import Getting_data.API_details as API_details
 from flask_wtf.csrf import CSRFProtect
 from flask_app.forms import FlightRequestForm
 from flask_app import app
-from flask import render_template, request
+from flask import render_template, request, Response
 
+import Getting_data.data_getter_OOP as data_getter_OOP
+import Getting_data.data_analyser_OOP as data_analyser_OOP 
+Data_getter = data_getter_OOP.Data_getter
+big_df= data_analyser_OOP.big_df
+small_df = data_analyser_OOP.small_df
 
 @app.route('/chart1')
 def chart1():
@@ -63,22 +68,39 @@ def payload_form():
 
 app.secret_key = API_details.FORMS_KEY  # Set your own secret key for Flask app
 csrf = CSRFProtect(app)
-
+#app.config["CACHE_TYPE"] = "null"
 
 @app.route('/flight_request', methods=['GET', 'POST'])
 def flight_request():
     form = FlightRequestForm()
 
     if form.validate_on_submit():
-        # Access form data using form.field_name.data
-
-        # Extract other form data in a similar manner
+        #Note: you have to sort out the passing of parameters into the functions
         payload = dict(form.data)
-        # Process the form data and make the flight request
-        # ...
-        print(payload)
-
+        payload = payload[:-2]
+        
         # Redirect to another page or return a response
-        return 'Form submitted successfully!'
+        json_graph1 = small_df.return_json()
+        return render_template('flight_request_data.html')
+
     return render_template('flight_request.html', form=form)
-# %%
+
+
+@app.route('/get_result')
+def get_result():
+    def generate():
+        getter = Data_getter(payload, 
+                        sanitise_data = True, 
+                        delete_data = False,
+                        dateStart = '01/04/2023',
+                        dateEnd = '31/12/2023')
+        big_df = big_df(filename = getter.filename, 
+                                filter_data_bool=True, 
+                                payload = payload,
+                                dateStart = '01/04/2023',
+                                dateEnd = '31/12/2023')
+        
+        small_df = big_df.create_small_df(method = 'quantile', quantile =0.14)
+        small_df.plot_polynomial_plotly(12)
+        yield small_df.return_json()
+    return Response(generate(), mimetype='text/event-stream')
