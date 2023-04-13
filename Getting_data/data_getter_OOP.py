@@ -116,6 +116,10 @@ class Data_getter():
     def write_data_in_chunks(self, month_df):
         try: 
             file_df = pd.read_parquet(self.filename)
+        except FileNotFoundError:
+            print(f'File is being created now for {self.filename}')
+            with open(self.filename, 'w') as f:
+                pass
         except Exception as err: 
             print(err)
 
@@ -191,26 +195,30 @@ class Data_getter():
     def insert_into_database(self):
         conn = sqlite3.connect('Data/Departure and destination.db')
         current_time = datetime.datetime.now()
-        self.time_when_added = str(datetime.datetime.now())
-        conn.execute('''
-            INSERT INTO date_checked(date, depart_dest, filename)
-            VALUES(?, ?, ?)
-        ''', (self.time_when_added, 
-              f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}",
-              self.filename))
-        print('got to here')
-        depart_dest = f"""{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}"""
-        conn.execute('''
-            INSERT INTO departure_destination_flight(id)
-            VALUES(?)
-        ''', (depart_dest,))
+        self.time_when_added = str(datetime.datetime.now().strftime('%d/%m/%Y %H:00'))
+        try:
+            conn.execute('''
+                INSERT OR IGNORE INTO date_checked(date, depart_dest, filename)
+                VALUES(?, ?, ?)
+            ''', (self.time_when_added, 
+                f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}",
+                self.filename))
+            print('got to here')
+            depart_dest = f"""{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}"""
+            conn.execute('''
+                INSERT OR IGNORE INTO departure_destination_flight(id)
+                VALUES(?)
+            ''', (depart_dest,))
+        except Exception as err:
+            print(err)
+            conn.rollback()
+            
         conn.commit()
         conn.close()
 
 
     # this method is only to be for round flights as of 2/3/2023
     def using_threads2(self, max_workers, dateStart=None, dateEnd=None, period=16,nights_in_dst=None, max = 1):
-        self.insert_into_database(self)
         self.return_dates(dateStart=self.dateStart, dateEnd=self.dateEnd, period=period, nights_in_dst=nights_in_dst)
         count = 1
         #looping_over = int(len(self.listDates)/max) + (len(self.listDates)%max_workers>0)
@@ -292,4 +300,9 @@ if __name__ == '__main__':
     # Note: the period that is passed as an argument into the using_threads2 functions should be +1 more compared to the difference between date_from and date_to and the same when looking for round tickets
 
 
+# %%
+getter.using_threads2(max_workers=2, 
+                          period = 16, 
+                          nights_in_dst=7, 
+                          max = 1)
 # %%
