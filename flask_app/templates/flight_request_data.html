@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Loading Screen</title>
+  <style>
+    /* Loading screen container */
+    .loading-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f8f8f8;
+      z-index: 9999;
+    }
+
+    /* Loading spinner animation */
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid #007bff;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: loading-animation 1s linear infinite;
+    }
+
+    /* Animation keyframes for loading spinner */
+    @keyframes loading-animation {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Loading text */
+    .loading-text {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #007bff;
+    }
+  </style>
+</head>
+<body>
+  <div class="loading-container">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading... This will take a minute</div>
+    <div class="chart1"></div>
+  </div>
+  <div class="result" style="display: none;"></div>
+
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script type="text/javascript">
+    const source = new EventSource('/get_result');
+
+    // Event handler for SSE updates
+    source.onmessage = function(event) {
+        document.querySelector('.loading-container').style.display = 'none';
+        // Parse the data as JSON
+        const data = JSON.parse(event);
+        // Update the result div with the received data
+        //document.getElementById('result').innerHTML = data.result;
+        var graphs1 = {{ event | safe}};
+        Plotly.plot("chart1", data,{});
+    };
+
+
+  </script>
+
+</body>
+</html>
+{% endblock %}
