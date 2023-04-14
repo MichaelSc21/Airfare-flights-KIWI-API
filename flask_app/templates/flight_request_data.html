@@ -54,24 +54,36 @@
   <div class="loading-container">
     <div class="loading-spinner"></div>
     <div class="loading-text">Loading... This will take a minute</div>
-    <div class="chart1"></div>
   </div>
-  <div class="result" style="display: none;"></div>
+  <div class="chart1" ></div>
 
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script type="text/javascript">
-    const source = new EventSource('/get_result');
 
-    // Event handler for SSE updates
-    source.onmessage = function(event) {
-        document.querySelector('.loading-container').style.display = 'none';
-        // Parse the data as JSON
-        const data = JSON.parse(event);
-        // Update the result div with the received data
-        //document.getElementById('result').innerHTML = data.result;
-        var graphs1 = {{ event | safe}};
-        Plotly.plot("chart1", data,{});
-    };
+    $(document).ready(function() {
+    var intervalId = setInterval(function() {
+        // Send AJAX request to Flask app to check for JSON data
+        $.ajax({
+            url: '/get_result',  // replace with your Flask route for checking data
+            type: 'GET',
+            success: function(response) {
+                // If JSON data is available, handle it
+                if (response.response) {
+                    document.querySelector('.loading-container').style.display = 'none';
+                    document.querySelector('.chart1').style.display = 'block';
+                    clearInterval(intervalId);  // stop polling
+                    // Handle the data here, e.g. update UI or perform other actions
+
+                    // Update the result div with the received data
+                    //document.getElementById('result').innerHTML = data.result;
+                    var graphs1 = JSON.parse(response.data);
+                    Plotly.plot("chart1", graphs1,{});
+                }
+            }
+        });
+    }, 1000);  // polling interval in milliseconds (e.g. 3000 ms = 3 seconds)
+    });
 
 
   </script>
