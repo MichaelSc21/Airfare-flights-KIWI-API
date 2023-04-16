@@ -1,93 +1,91 @@
 {% extends "layout.html" %}
 {% block content %}
 
+	<div class="loading-container">
+		<div class="loading-spinner"></div>
+		<div class="loading-text">Loading... This will take a minute</div>
+	</div>
+	<div class="row p-1">
+		<div class="card m-auto" style="width: 90%;">
+			<div class="card-body">
+				<div class="chart"></div>
+				<p class="chart">Lorem ipsum dolor sit amet consectetur adipisicing elit. 
+					Quibusdam beatae eos esse hic tempore, itaque dolor quod. Eligendi debitis 
+					doloremque itaque architecto velit autem suscipit ut laborum optio maxime at 
+					facere perspiciatis quae molestiae nemo, saepe impedit. Quaerat corporis eius 
+					libero fugit. Debitis non nobis repudiandae ex soluta vero repellendus omnis eos, 
+					voluptate mollitia dolorem asperiores sint itaque consequuntur voluptatum totam 
+					fugit aut nemo maiores! Laboriosam quidem error possimus nobis eligendi dolor aut 
+					ullam voluptas officiis similique placeat modi, eaque voluptates dolores odit optio, 
+					pariatur molestias. Eum praesentium totam error aliquam,
+					tempore in quia exercitationem! Temporibus corporis asperiores esse ipsum?</p>
+			</div>
+		</div>
+	</div>
+		
+		<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+		<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+		<!--<script type="text/javascript">
+			$(document).ready(function() {	
+				var intervalId = setInterval(function() {
+					// Send AJAX request to Flask app to check for JSON data
+					$.ajax({
+						url: '/get_result',  // replace with your Flask route for checking data
+						type: 'GET',
+						success: function(response) {
+							// If JSON data is available, handle it
+							if (response.response) {
+								clearInterval(intervalId);  // stop polling
+								document.querySelector('.loading-container').style.display = 'none';
+								//document.querySelector('.chart1').style.display = 'block';
+								//document.getElementById('result').innerHTML = data.result;
+								var graphs1 = JSON.parse(response.data);
+								var chart = document.getElementsByClassName('chart')[0];
+								// Add a css class created in the main.css to slide the items from the left
+								chart.classList.add('show')
+								document.querySelector('p.chart').classList.add('show')
+								Plotly.newPlot(chart, graphs1.data,{});
+							}
+						}
+					});
+				}, 10000);  // polling interval in milliseconds (e.g. 3000 ms = 3 seconds)
+			});
+		</script>-->
+		
+		<script type="text/javascript">
+			// Use Jinja syntax to get the value of the session variable 'json_graph'
+			var graphs1 = '{{ session["json_graph"]|default("null")}}';
+			
+			// Check if session variable 'json_graph' exists
+			if (graphs1 !== 'null') {
+				console.log('It already has the json_graph session variable saved')
+				// If session variable exists, render graph using data from session
+				document.querySelector('.loading-container').style.display = 'none';
+				var chart = document.getElementsByClassName('chart')[0];
+				// Add a css class created in the main.css to slide the items from the left
+				chart.classList.add('show')
+				document.querySelector('p.chart').classList.add('show')
+				Plotly.newPlot(chart, graphs1,{});
+			} else {
+				$(document).ready(function() {	
+					fetch('/get_result')  
+						.then(function(response) {
+							if (!response.response) {
+								console.log('it fetched the data from the get_result flask route')
+								document.querySelector('.loading-container').style.display = 'none';
+								console.log(response.data)
+								graphs1 = JSON.parse(response.data);
+								var chart = document.getElementsByClassName('chart')[0];
+								// Add a css class created in the main.css to slide the items from the left
+								chart.classList.add('show')
+								document.querySelector('p.chart').classList.add('show')
+								Plotly.newPlot(chart, graphs1.data,{});
+							};
+							
+						});
+				});
+			}	
 
-
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Loading Screen</title>
-  <style>
-    /* Loading screen container */
-    .loading-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: #f8f8f8;
-      z-index: 9999;
-    }
-
-    /* Loading spinner animation */
-    .loading-spinner {
-      width: 50px;
-      height: 50px;
-      border: 3px solid #007bff;
-      border-radius: 50%;
-      border-top-color: transparent;
-      animation: loading-animation 1s linear infinite;
-    }
-
-    /* Animation keyframes for loading spinner */
-    @keyframes loading-animation {
-      0% {
-        transform: rotate(0deg);
-      }
-      100% {
-        transform: rotate(360deg);
-      }
-    }
-
-    /* Loading text */
-    .loading-text {
-      margin-top: 20px;
-      font-size: 18px;
-      color: #007bff;
-    }
-  </style>
-</head>
-<body>
-  <div class="loading-container">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">Loading... This will take a minute</div>
-  </div>
-  <div class="chart1" ></div>
-
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script type="text/javascript">
-
-    $(document).ready(function() {
-    var intervalId = setInterval(function() {
-        // Send AJAX request to Flask app to check for JSON data
-        $.ajax({
-            url: '/get_result',  // replace with your Flask route for checking data
-            type: 'GET',
-            success: function(response) {
-                // If JSON data is available, handle it
-                if (response.response) {
-                    document.querySelector('.loading-container').style.display = 'none';
-                    document.querySelector('.chart1').style.display = 'block';
-                    clearInterval(intervalId);  // stop polling
-                    // Handle the data here, e.g. update UI or perform other actions
-
-                    // Update the result div with the received data
-                    //document.getElementById('result').innerHTML = data.result;
-                    var graphs1 = JSON.parse(response.data);
-                    Plotly.plot("chart1", graphs1,{});
-                }
-            }
-        });
-    }, 1000);  // polling interval in milliseconds (e.g. 3000 ms = 3 seconds)
-    });
-
-
-  </script>
-
-</body>
-</html>
-{% endblock %}
+				
+		</script>
+	{% endblock %}
