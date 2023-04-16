@@ -54,10 +54,10 @@
 		
 		<script type="text/javascript">
 			// Use Jinja syntax to get the value of the session variable 'json_graph'
-			var graphs1 = '{{ session["json_graph"]|default("null")}}';
+			var graphs1 = {{ session["json_graph"]|default("null") | safe}};
 			
 			// Check if session variable 'json_graph' exists
-			if (graphs1 !== 'null') {
+			if (graphs1 !== null) {
 				console.log('It already has the json_graph session variable saved')
 				// If session variable exists, render graph using data from session
 				document.querySelector('.loading-container').style.display = 'none';
@@ -65,6 +65,7 @@
 				// Add a css class created in the main.css to slide the items from the left
 				chart.classList.add('show')
 				document.querySelector('p.chart').classList.add('show')
+
 				Plotly.newPlot(chart, graphs1,{});
 			} else {
 				$(document).ready(function() {	
