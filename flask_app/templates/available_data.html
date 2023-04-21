@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+<body>
+    <div class="container mt-4">
+        {% for row in locations_available %}
+            <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <h3>{{row}}</h3>
+                    </div>
+            </div>
+        {% endfor %}
+    </div>
+</body>
+{% endblock %}
