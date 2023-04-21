@@ -5,8 +5,8 @@ import os
 from flask_wtf.csrf import CSRFProtect
 from flask_app.forms import FlightRequestForm
 from flask_app import app
-from flask import render_template, request
-import threading
+from flask import render_template, request, session
+import sqlite3
 
 import Getting_data.API_details as API_details
 import Getting_data.data_getter_OOP as data_getter_OOP
@@ -76,22 +76,40 @@ csrf = CSRFProtect(app)
 def flight_request():
     form = FlightRequestForm()
 
+    
+    print(session)
     if form.validate_on_submit():
         #Note: you have to sort out the passing of parameters into the functions
         payload = dict(form.data)
         del payload['submit']
         del payload['csrf_token']
-        print(payload)
-        t1 = threading.Thread(target=get_result)
-        t1.start()
-        return render_template('flight_request_data.html')
+
+        if payload['limit'] == None:
+            payload['limt'] = 1000
+        if payload['flight_type'] == 'One-way':
+            payload['flight_type'] = 'oneway'
+        else:
+            payload['flight_type'] = 'round'
+        payload1 = {}
+        for key, value in payload.items():
+            if  payload[key] == None or  payload[key] == "":
+                pass
+            else:
+                print(payload[key])
+                payload1[key] = value
+        payload = payload1
+        #if 'json_graph' in session:
+        #    print(session['json_graph'])
+        #   del session['json_graph']
+        session['payload'] = payload
+        return render_template('flight_request_data.html', )
 
     return render_template('flight_request.html', form=form)
 
 
 @app.route('/get_result')
 def get_result():
-    payload={
+    """payload={
     'fly_from': 'LTN',
     'fly_to': 'IAS',
     'date_from': '01/04/2023',
@@ -105,27 +123,43 @@ def get_result():
     'curr': 'GBP',
     'sort':'date',
     'selected_cabins': 'M',
-    'limit': 1000}
+    'limit': 1000}"""
+    payload = session.get('payload')
     getter = Data_getter(payload, 
                         sanitise_data = True, 
                         delete_data = False,
                         dateStart = '01/04/2023',
-                        dateEnd = '31/12/2023')
-    print(getter.filename )
-    print(f"""current directory in routes is: + {os.getcwd()}
-    
-    
-    
-    """)
-    big_dfs= big_df(filename = getter.filename, 
-                            filter_data_bool=True, 
-                            payload = payload,
-                            dateStart = '01/04/2023',
-                            dateEnd = '31/12/2023')
-    
+                        dateEnd = '16/05/2023')
+    #getter.using_threads2(max_workers=2, 
+     #                   period = 16, 
+      #                  nights_in_dst=7, 
+       #                 max = 1)
+    big_dfs = big_df(filename = getter.filename, 
+                                filter_data_bool=True, 
+                                payload = payload)
     small_dfs = big_dfs.create_small_df(method = 'quantile', quantile =0.14)
     small_dfs.plot_polynomial_plotly(12)
 
     json_graph1 = small_dfs.return_json()
-    print(json_graph1)
-    return {"response": 'True', "data":json_graph1}
+    session['json_graph'] = json_graph1
+    print('rendered graph')
+    return {"ok": True, "data":json_graph1}
+
+@app.route('/available_data')
+def get_available_data():
+    # It is going to display the destinations that have available data
+    try:
+        conn = sqlite3.connect('Data/Departure and destination.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM departure_destination_flight')
+        rows = cursor.fetchall()
+        print( rows)
+    except Exception as err:
+        print(err)
+        conn.rollback()
+    conn.commit()
+    conn.close()
+
+
+
+    return render_template('available_data.html', locations_available = rows)
