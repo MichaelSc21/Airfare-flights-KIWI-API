@@ -1,22 +1,26 @@
 # %%
+import sys
 import requests
 import json
+import os
 import sqlite3
 import pandas as pd
 import concurrent.futures
-import API_details
+print("current directory in data_getter_OOP is:" + os.getcwd())
+import Getting_data.API_details as API_details
+import importlib
+importlib.reload(API_details)
 import time
-import os
-import sys
 import datetime
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.insert(0,parent_dir)
-os.chdir(sys.path[0])
-print(os.getcwd())
+
 
 class Data_getter():
-    def __init__(self, payload, sanitise_data=False, delete_data = False, dateStart=None, dateEnd=None):  # noqa: E501
+    def __init__(self, 
+                 payload, 
+                 sanitise_data=False, 
+                 delete_data = False, 
+                 date_start=None, 
+                 date_end=None):  # noqa: E501
         self.payload = payload
         if payload['flight_type'] == 'oneway':
             self.oneway = True
@@ -24,10 +28,11 @@ class Data_getter():
         else:
             self.oneway = False
             self.round = True
-        self.dateStart = dateStart
-        self.dateEnd = dateEnd
-        self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}_{self.dateStart}_to_{self.dateEnd}.parquet"
-        self.filename = os.path.join(API_details.DIR_DATA, self.filename)
+
+        self.date_start= date_start
+        self.date_end = date_end
+        self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}_{str(self.date_start).replace('/',  '-')}_to_{str(self.date_end).replace('/',  '-')}.parquet"
+        self.filename = os.path.join(sys.path[0],API_details.DIR_DATA_PARQUET, self.filename)
         self.sanitise = sanitise_data
         self.delete_data = delete_data
         if self.delete_data:
@@ -49,12 +54,10 @@ class Data_getter():
         response = requests.request("GET", url,headers=headers)
         return response.text
     
-    @staticmethod
-    def get_departure_duration(row):
+    def get_departure_duration(self, row):
         return row['departure'] / 3600
     
-    @staticmethod
-    def get_return_duration(row):
+    def get_return_duration(self, row):
         return row['return'] / 3600
     
     def get_departure_date(self, row):
@@ -78,8 +81,18 @@ class Data_getter():
         except Exception as err:
             print(err)
             print(data)
-
-        usecols = ['id', 'date_added', 'quality', 'price', 'airlines', 'departure_duration','return_duration', 'routecount', 'departure_date', 'return_date', 'seats_available']
+            
+        usecols = ['id', 
+                   'date_added', 
+                   'quality', 
+                   'price', 
+                   'airlines', 
+                   'departure_duration',
+                   'return_duration', 
+                   'routecount', 
+                   'departure_date', 
+                   'return_date', 
+                   'seats_available']
 
         df = pd.DataFrame.from_dict(data)
         df['departure_duration'] = df['duration'].apply(lambda row: self.get_departure_duration(row))
@@ -113,13 +126,12 @@ class Data_getter():
             with open(self.filename, 'w') as f:
                 json.dump(data, f, indent=2)
 
+    # writes the data to a file in chunks; It converts the existing data in the file to 
+    # dataframe then concactenates the month_df and the file_df together
     def write_data_in_chunks(self, month_df):
         try: 
             file_df = pd.read_parquet(self.filename)
-        except FileNotFoundError:
-            print(f'File is being created now for {self.filename}')
-            with open(self.filename, 'w') as f:
-                pass
+
         except Exception as err: 
             print(err)
 
@@ -134,13 +146,12 @@ class Data_getter():
 
 
 
-    def return_dates(self, dateStart, dateEnd, period, nights_in_dst):
-        if dateStart != None:
-            self.payload['date_from'] = dateStart
-            self.payload['date_to'] = pd.to_datetime(dateStart,format="%d/%m/%Y") + pd.Timedelta(days=period-1)
+    def return_dates(self, period, nights_in_dst):
+        if self.date_start != None:
+            self.payload['date_from'] = self.date_start
+            self.payload['date_to'] = pd.to_datetime(self.date_start
+            ,format="%d/%m/%Y") + pd.Timedelta(days=period-1) 
             self.payload['date_to']=self.payload['date_to'].strftime('%d/%m/%Y')
-
-
 
         if self.payload['flight_type'] == 'oneway':
             dates = [self.payload['date_from'], self.payload['date_to']]
@@ -153,25 +164,25 @@ class Data_getter():
             dates = [self.payload['date_from'], self.payload['date_to'], self.payload['return_from'], self.payload['return_to']]
         
         print(self.payload)
-        print(dateEnd)
-        self.listDates = []
-        dateEnd = pd.to_datetime(dateEnd,format="%d/%m/%Y")
-        print(dateEnd)
+        print(self.date_end)
+        self.list_dates = []
+        date_end = pd.to_datetime(self.date_end,format="%d/%m/%Y")
+        print(date_end)
         # Converts dates into pd.datetime
         for date in range(len(dates)):
             dates[date] = pd.to_datetime(dates[date],format="%d/%m/%Y")
 
-        self.listDates.append([date.strftime('%d/%m/%Y') for date in dates])
-        # Loops over the dates until it gets to the dateEnd and adds them to self.listDates in the format dd/mm/YYYY  # noqa: E501
-        while dates[-1] < dateEnd:
-            print(f"{dates[-1]} is smaller than {dateEnd}")
+        self.list_dates.append([date.strftime('%d/%m/%Y') for date in dates])
+        # Loops over the dates until it gets to the date_end and adds them to self.list_dates in the format dd/mm/YYYY  # noqa: E501
+        while dates[-1] < self.date_end:
+            print(f"{dates[-1]} is smaller than {self.date_end}")
             for date in range(len(dates)):
                 dates[date] = dates[date] + pd.Timedelta(days = period)
-            self.listDates.append([date.strftime('%d/%m/%Y') for date in dates])
+            self.list_dates.append([date.strftime('%d/%m/%Y') for date in dates])
 
 
+    # this function is going to be called by the thread pool, and then the write_data_in_chunks function
     def middle_man(self, date):
-
         if self.payload['flight_type'] == 'oneway':
             self.payload['date_from'], self.payload['date_to'] = date
             temp_dict = self.get_data()
@@ -188,8 +199,6 @@ class Data_getter():
             temp_dict= json.loads(temp_dict)
             temp_dict= json.dumps(temp_dict['data'])
 
-
-
         return temp_dict
 
     def insert_into_database(self):
@@ -198,11 +207,14 @@ class Data_getter():
         self.time_when_added = str(datetime.datetime.now().strftime('%d/%m/%Y %H:00'))
         try:
             conn.execute('''
-                INSERT OR IGNORE INTO date_checked(date, depart_dest, filename)
-                VALUES(?, ?, ?)
+                INSERT OR IGNORE INTO date_checked(date, depart_dest, filename, start_date, end_date)
+                VALUES(?, ?, ?, ?, ?)
             ''', (self.time_when_added, 
                 f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}",
-                self.filename))
+                self.filename,
+                self.date_start
+                ,
+                self.date_end))
             print('got to here')
             depart_dest = f"""{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}"""
             conn.execute('''
@@ -218,33 +230,33 @@ class Data_getter():
 
 
     # this method is only to be for round flights as of 2/3/2023
-    def using_threads2(self, max_workers, dateStart=None, dateEnd=None, period=16,nights_in_dst=None, max = 1):
-        self.return_dates(dateStart=self.dateStart, dateEnd=self.dateEnd, period=period, nights_in_dst=nights_in_dst)
+    def using_threads2(self, max_workers, date_start
+    =None, date_end=None, period=16,nights_in_dst=None, max = 1):
+        self.return_dates(period=period, nights_in_dst=nights_in_dst)
         count = 1
-        #looping_over = int(len(self.listDates)/max) + (len(self.listDates)%max_workers>0)
+        #looping_over = int(len(self.list_dates)/max) + (len(self.list_dates)%max_workers>0)
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             dateidx= 0
             #for i in range(looping_over):
             worker_list = []
             worker_count =0
             
-            while dateidx < len(self.listDates):
+            while dateidx < len(self.list_dates):
                 # The variable max makes sure that only a certain number of API calls can be done before the dictionaries with data have to be written to a file   # noqa: E501
                 if worker_count<max*max_workers:
                     worker_count += 1
-                    worker_list.append(executor.submit(self.middle_man, date=self.listDates[dateidx]))
+                    worker_list.append(executor.submit(self.middle_man, date=self.list_dates[dateidx]))
                     time.sleep(0.5)
                     print(dateidx)
                     dateidx += 1
                 else:
                     worker_count +=1 
-                if worker_count>max*max_workers or dateidx == len(self.listDates):
+                if worker_count>max*max_workers or dateidx == len(self.list_dates):
                     for future in concurrent.futures.as_completed(worker_list):
                         temp_df= future.result()
                         if temp_df is None:
                             print('Temp dict is empty')
                         else:
-
                             self.write_data_in_chunks(month_df=temp_df)
 
                     print(f"We have written to the file {count} times")
@@ -259,6 +271,11 @@ class Data_getter():
 # %% 
 if __name__ == '__main__':
     #Note: Date is in the format: DD/MM/YYYY
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(current_dir)
+    sys.path.insert(0,parent_dir)
+    os.chdir(sys.path[0])
+    print(os.getcwd())
     payload={
     'fly_from': 'LTN',
     'fly_to': 'IAS',
@@ -290,19 +307,19 @@ if __name__ == '__main__':
     getter = Data_getter(payload, 
                          sanitise_data = True, 
                          delete_data = False,
-                         dateStart = '01/04/2023',
-                         dateEnd = '01/05/2023')
+                         date_start = '01/04/2023',
+                         date_end = '31/12/2023')
 
     #getter.using_threads2(max_workers=2, 
     #                      period = 16, 
     #                      nights_in_dst=7, 
     #                      max = 1)
-    # Note: the period that is passed as an argument into the using_threads2 functions should be +1 more compared to the difference between date_from and date_to and the same when looking for round tickets
+    
+    # Note: the period that is passed as an argument into the using_threads2 functions 
+    # should be +1 more compared to the difference between 
+    # date_from and date_to and the same when looking for round tickets
+    getter.using_threads2(  max_workers=2, 
+                        period = 16, 
+                        nights_in_dst=7, 
+                        max = 1)
 
-
-# %%
-getter.using_threads2(max_workers=2, 
-                          period = 16, 
-                          nights_in_dst=7, 
-                          max = 1)
-# %%
