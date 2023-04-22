@@ -160,6 +160,10 @@ def get_available_data():
     conn.commit()
     conn.close()
 
+    # after departure and destinations are shown;
+    # you can click on one of them which will load a table via JS
+    # which will show for that respective destination and departure, the dates 
+    # when data was retrieved
 
-
+    # This will then have a dropdown menu, of either show_graph, or compare graph
     return render_template('available_data.html', locations_available = rows)
