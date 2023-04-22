@@ -1,46 +1,48 @@
 # %%
 import sys 
 import os
-#sys.path.insert(0,'D:\OneDrive\Coding\A-level\Airfare-flights KIWI API')
-os.chdir(sys.path[0])
-import Getting_data.API_details as API_details
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from importlib import reload
-
-
 import json
-
-reload(API_details)
 from scipy.optimize import curve_fit, leastsq
 from mplcursors import cursor
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import date
-import plotly
+
+from importlib import reload
+import Getting_data.API_details as API_details
+from Getting_data.data_getter_OOP import Data_getter
+reload(API_details)
+reload(API_details)
+
 #%matplotlib qt
 
-current_dir = os.getcwd()
-print("Current working directory in data_analyser_OOP:", current_dir)
-
 class big_df():
-    def __init__(self, filename=None, payload = None, filter_data_bool = False): 
-        if payload != None:
-            self.payload = payload
-            self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}.parquet"  # noqa: E501
-            self.filename = os.path.join(API_details.DIR_DATA, self.filename)
+    def __init__(self, 
+                 filename=None, 
+                 payload = None, 
+                 filter_data_bool = False, 
+                 dateStart = None, 
+                 dateEnd = None): 
+        if filename == None:
+            self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}_{str(self.date_start).replace('/',  '-')}_to_{str(self.date_end).replace('/',  '-')}.parquet"
+            self.filename = os.path.join(sys.path[0],API_details.DIR_DATA_PARQUET, self.filename)
         else:
-
-            self.filename = os.path.join(API_details.DIR_DATA, filename)
+            self.filename = filename
+        self.payload = payload
         self.df = pd.read_parquet(self.filename)
 
         if filter_data_bool == True:
             self.filter_data()
 
+    def access_database():
+        pass
 
-
+    # we get rid of all data outside of 2 standard deviations
+    # We sort out the dataframe in ascending order
     def filter_data(self):    
         mean = self.df['price'].mean()
         std = self.df['price'].std()
@@ -59,10 +61,13 @@ class big_df():
     def create_small_df(self, method, quantile=None, ):
         self.method = method
         self.quantile = quantile
-        return small_df(big_df =self.df,method = self.method, quantile =self.quantile, filename =self.filename, payload = self.payload)
-    
-    #def compare_data_small_df(self,date)
-    
+        return small_df(big_df =self.df,
+                        method = self.method, 
+                        quantile =self.quantile, 
+                        filename =self.filename, 
+                        payload = self.payload)
+
+# For each unique date, we only show a record, based on some criteria
 class small_df():
     def __init__(self, big_df, method, quantile, filename, payload):
         self.method = method
@@ -151,7 +156,7 @@ class small_df():
         self.est_values = [self.est_amps, self.est_freq, self.est_phase]
 
     def model_based_on_param_fourier(self,degree):
-        
+        self.est_param_fourier()
         ind = np.argpartition(self.est_values[0], -degree)[-degree:]
         for i in ind:
             self.y_dense += self.sinfunc(self.x_line_dense, self.est_values[0][i], self.est_values[1][i],self.est_values[2][i]) 
@@ -245,7 +250,7 @@ class small_df():
         self.df.to_json(orient='split', path_or_buf=self.small_df_filename)
 
 
-    def compare_data_small_df_plotly(self, date=None):
+    def compare_data_small_df_plotly(self, other_small_df=None):
         #self.json_df = pd.read_json(orient='split', path_or_buf=self.small_df_filename)
         mask = self.big_df['date_added'] == pd.to_datetime(date, format="%d/%m/%Y")
         self.other_date_df = small_df(big_df=self.big_df[mask],method=self.method, quantile=0.14, payload = self.payload, filename=self.filename).df  # noqa: E501
@@ -287,7 +292,9 @@ class small_df():
         self.fig = fig
 
     def return_json(self):
-        self.json_file_plotly_graph = json.dumps(self.fig, cls = plotly.utils.PlotlyJSONEncoder)
+
+        #self.json_file_plotly_graph = json.dumps(self.fig, cls = plotly.utils.PlotlyJSONEncoder
+        self.json_file_plotly_graph = self.fig.to_json()
         return self.json_file_plotly_graph
 
 
@@ -311,10 +318,23 @@ if __name__ == '__main__':
     'sort':'date',
     'selected_cabins': 'M',
     'limit': 1000}
-
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(current_dir)
+    sys.path.insert(0,parent_dir)
+    os.chdir(sys.path[0])
+    print(os.getcwd())
     for df_name in df_names:
-        
-        big_dfs[df_name] = big_df(filename = df_name+'.parquet', filter_data_bool=True, payload = payload)
+        getter = Data_getter(payload, 
+                        sanitise_data = True, 
+                        delete_data = False,
+                        dateStart = '01/04/2023',
+                        dateEnd = '31/12/2023')
+        print(getter.filename)
+        big_dfs[df_name] = big_df(filename = getter.filename, 
+                                filter_data_bool=True, 
+                                payload = payload,
+                                dateStart = '01/04/2023',
+                                dateEnd = '31/12/2023')
         
         temp_df = big_dfs[df_name].df
         small_dfs[df_name] = big_dfs[df_name].create_small_df(method = 'quantile', quantile =0.14)
