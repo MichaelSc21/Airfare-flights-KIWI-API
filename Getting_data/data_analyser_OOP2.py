@@ -1,5 +1,6 @@
 # %%
 import os
+import sys
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -13,9 +14,8 @@ from datetime import date
 import sqlite3
 
 from importlib import reload
-import Getting_data.API_details as API_details
-from Getting_data.data_getter_OOP import Data_getter
-reload(API_details)
+import API_details as API_details
+#from Getting_data.data_getter_OOP import Data_getter
 reload(API_details)
 
 #%matplotlib qt
@@ -25,14 +25,19 @@ class small_df():
     def __init__(self, 
                  filename=None, 
                  payload = None, 
-                 filter_data_bool = False,  ): 
+                 filter_data_bool = False,  
+                 date_start = None, 
+                 date_end = None): 
+        self.payload = payload
+        self.date_start = date_start
+        self.date_end = date_end
         if filename == None:
             self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}_{str(self.date_start).replace('/',  '-')}_to_{str(self.date_end).replace('/',  '-')}.parquet"
             self.filename = os.path.join(sys.path[0],API_details.DIR_DATA_PARQUET, self.filename)
         else:
             self.filename = filename
 
-        self.payload = payload
+
         self.big_df = pd.read_parquet(self.filename)
 
         if filter_data_bool == True:
@@ -305,3 +310,37 @@ class small_df():
         #self.json_file_plotly_graph = json.dumps(self.fig, cls = plotly.utils.PlotlyJSONEncoder
         self.json_file_plotly_graph = self.fig.to_json()
         return self.json_file_plotly_graph
+
+
+# %%
+if __name__ == '__main__':
+        
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(current_dir)
+    sys.path.insert(0,parent_dir)
+    os.chdir(sys.path[0])
+    print(os.getcwd())
+
+    payload={  
+    'fly_from': 'LTN',
+    'fly_to': 'IAS',
+    'date_from': '01/04/2023',
+    'date_to': '16/04/2023',
+    'return_from': '08/04/2023',
+    'return_to': '23/04/2023',
+    'nights_in_dst_from': 7,
+    'nights_in_dst_to': 7,
+    'flight_type': 'round',
+    'adults': '4',
+    'curr': 'GBP',
+    'sort':'date',
+    'selected_cabins': 'M',
+    'limit': 1000}
+    
+    analyser = small_df(payload = payload, 
+                        filter_data_bool = True, 
+                        date_start = '01/04/2023', date_end = '16/05/2023')
+    analyser.create_small_df()
+    
+
+# %%
