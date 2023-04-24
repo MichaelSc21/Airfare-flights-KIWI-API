@@ -56,8 +56,9 @@ class small_df():
 
 
     # We create a small df which we can visualise better on a graph
-    def create_small_df(self, method, quantile, filename, payload):
+    def create_small_df(self, method=None, quantile=None):
         self.method = method
+        self.quantile = quantile
         self.df = pd.DataFrame(columns=['departure_date', 'price', 'seats_available'])
         unique_dates = self.big_df['departure_date'].unique()
         #For the mean
@@ -241,19 +242,27 @@ class small_df():
             WHERE date LIKE ?
             """, ("%", date_when_checked, "%"))
             rows = conn.fetchall()
-            self.other_filename = rows[2]
+            self.other_date_df_filename = rows[2]
         except Exception as err:
             print(err)
             conn.rollback()
-
         conn.commit()
         conn.close()
+        # we create an instance of another small_df class, and we use it to get the small df
+        # this is used to compare against the small_df form the instance it is created from
 
 
-    def compare_data_small_df_plotly(self, other_small_df=None):
+
+    def compare_data_small_df_plotly(self, other_date_df_filename=None):
+        if self.other_date_df_filename == None:
+            self.other_date_df = small_df(filename = other_date_df_filename, filter_data_bool = True)
+        else:
+            self.other_date_df = small_df(filename = self.other_date_df_filename, filter_data_bool = True)
+
+        self.other_date_df.create_small_df(method = self.method, quantile = self.quantile)
+        self.other_date_df = self.other_date_df.df
         #self.json_df = pd.read_json(orient='split', path_or_buf=self.small_df_filename)
         #mask = self.big_df['date_added'] == pd.to_datetime(date, format="%d/%m/%Y")
-        self.other_date_df = small_df(big_df=self.big_df[mask],method=self.method, quantile=0.14, payload = self.payload, filename=self.filename).df  # noqa: E501
         price_change_mask = self.df['price'] - self.other_date_df['price']
 
         colour_series =[]
