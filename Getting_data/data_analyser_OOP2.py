@@ -33,10 +33,10 @@ class small_df():
         self.date_end = date_end
         if filename == None:
             self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}_{str(self.date_start).replace('/',  '-')}_to_{str(self.date_end).replace('/',  '-')}.parquet"
-            self.filename = os.path.join(sys.path[0],API_details.DIR_DATA_PARQUET, self.filename)
+            #self.filename = os.path.join(sys.path[0],API_details.DIR_DATA_PARQUET, self.filename)
         else:
             self.filename = filename
-
+        self.filename = os.path.join(sys.path[0],API_details.DIR_DATA_PARQUET, self.filename)
 
         self.big_df = pd.read_parquet(self.filename)
 
@@ -106,13 +106,11 @@ class small_df():
         
         self.df.index = self.df['departure_date']
         self.df = self.df.drop('departure_date', axis=1)
-        
-        self.big_df = big_df
+
         self.y = self.df['price']
         self.x = self.df.index
         self.x_line = np.array(self.x.astype(int) / 10**9)
-        self.payload = payload
-        self.filename = filename
+        
         self.small_df_filename = self.filename[:-5] + '_small_df' + '.json'
         self.file_graph_plotly = os.path.join(API_details.DIR_GRAPH, API_details.FILE_GRAPH_PLOTLY)
 
@@ -259,6 +257,7 @@ class small_df():
 
 
     def compare_data_small_df_plotly(self, other_date_df_filename=None):
+        self.other_date_df_filename = other_date_df_filename
         if self.other_date_df_filename == None:
             self.other_date_df = small_df(filename = other_date_df_filename, filter_data_bool = True)
         else:
@@ -268,6 +267,7 @@ class small_df():
         self.other_date_df = self.other_date_df.df
         #self.json_df = pd.read_json(orient='split', path_or_buf=self.small_df_filename)
         #mask = self.big_df['date_added'] == pd.to_datetime(date, format="%d/%m/%Y")
+
         price_change_mask = self.df['price'] - self.other_date_df['price']
 
         colour_series =[]
@@ -322,15 +322,15 @@ if __name__ == '__main__':
     print(os.getcwd())
 
     payload={  
-    'fly_from': 'LTN',
-    'fly_to': 'IAS',
+    'fly_from': 'OPO',
+    'fly_to': 'BHX',
     'date_from': '01/04/2023',
     'date_to': '16/04/2023',
     'return_from': '08/04/2023',
     'return_to': '23/04/2023',
     'nights_in_dst_from': 7,
     'nights_in_dst_to': 7,
-    'flight_type': 'round',
+    'flight_type': 'oneway',
     'adults': '4',
     'curr': 'GBP',
     'sort':'date',
@@ -340,7 +340,10 @@ if __name__ == '__main__':
     analyser = small_df(payload = payload, 
                         filter_data_bool = True, 
                         date_start = '01/04/2023', date_end = '16/05/2023')
-    analyser.create_small_df()
+    analyser.create_small_df(method = 'quantile', quantile = 0.3)
+    analyser.compare_data_small_df_plotly('LTN_to_IAS_round_01-04-2023_to_31-12-2023.parquet')
+    checking_df = analyser.df
     
 
 # %%
+# *NOTE: I have to add the ability to compare 2 graphs properly, however, I have to make a plan to make everything organised
