@@ -148,7 +148,9 @@ def get_result():
 @app.route('/available_data')
 def get_available_data():
     # It is going to display the destinations that have available data
-    try:
+    data_analysing_functions= ['Plot graph', 'Plot graph with line of best fit', 'Compare data from 2 files']
+
+    """try:
         conn = sqlite3.connect('Data/Departure and destination.db')
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM departure_destination_flight')
@@ -158,7 +160,7 @@ def get_available_data():
         print(err)
         conn.rollback()
     conn.commit()
-    conn.close()
+    conn.close()"""
 
     # after departure and destinations are shown;
     # you can click on one of them which will load a table via JS
@@ -166,4 +168,4 @@ def get_available_data():
     # when data was retrieved
 
     # This will then have a dropdown menu, of either show_graph, or compare graph
-    return render_template('available_data.html', locations_available = rows)
+    return render_template('available_data.html', data_analysing_functions = data_analysing_functions)
