@@ -2,13 +2,15 @@
 {% block content %}
 <body>
     <div class="container mt-4">
-        {% for row in locations_available %}
+        {% for function in data_analysing_functions %}
             <div class="form-row">
                     <div class="form-group col-md-4">
-                        <h3>{{row}}</h3>
+                        <label>{{ function }}</label>
+                        <button onclick="myFunction('{{ function }}')" class = 'btn'>Press me</button>
                     </div>
             </div>
         {% endfor %}
     </div>
+    <script src="{{ url_for('static',filename = 'available_data.js') }}"></script>
 </body>
 {% endblock %}
