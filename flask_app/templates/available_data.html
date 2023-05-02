@@ -1,16 +1,31 @@
 {% extends "layout.html" %}
 {% block content %}
 <body>
-    <div class="container mt-4">
+    <div class="col-md-3 mx-3">
+        <!-- Button group for buttons -->
+        <div class="btn-group-vertical my-5" role="group">
         {% for function in data_analysing_functions %}
-            <div class="form-row">
-                    <div class="form-group col-md-4">
-                        <label>{{ function }}</label>
-                        <button onclick="myFunction('{{ function }}')" class = 'btn'>Press me</button>
-                    </div>
-            </div>
+            <button type="button" class="btn btn-primary">{{ function }}</button>
         {% endfor %}
+        </div>
     </div>
+    <div class="col-md-8 mx-5">
+        <!-- Checkboxes for filenames -->
+        <div class="form-check my-5">
+        {% for filename in filenames %}
+            <div class="form-check-item mb-3">
+            <input class="form-check-input" type="checkbox" id="{{ filename }}" value="{{ filename }}">
+            <label class="form-check-label" for="{{ filename }}">
+            {{ filename }}
+            </label>
+            <p></p>
+        {% endfor %}
+        </div>
+    </div>
+    
+
+
+    
     <script src="{{ url_for('static',filename = 'available_data.js') }}"></script>
 </body>
 {% endblock %}
