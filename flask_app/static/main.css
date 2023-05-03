@@ -108,3 +108,13 @@ opacity: 1;
     background-color: #0062cc;
   }
   
+
+
+
+  /* This is for customising the webpage available_data */
+
+  .filename-item {
+    font-size: 1.2rem; /* Increase the font size */
+    padding: 0.5rem; /* Add padding to the top and bottom of each item */
+    border-bottom: 1px solid #ccc; /* Add a border between the items */
+  }
