@@ -150,19 +150,43 @@ def get_available_data():
     # It is going to display the destinations that have available data
     data_analysing_functions= ['Plot graph', 'Plot graph with line of best fit', 'Compare data from 2 files']
 
+    # Getting the departures and destinations which I ahve available
     try:
         conn = sqlite3.connect('Data/Departure and destination.db')
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM departure_destination_flight')
-        filenames = cursor.fetchall()
-        print(filenames)
-        print(type(filenames))
+        depart_dest = cursor.fetchall()
+
     except Exception as err:
         print(err)
         conn.rollback()
     conn.commit()
     conn.close()
 
+
+    # Getting the dates that have been checked for the departures and destinations
+    try:
+        conn = sqlite3.connect('Data/Departure and destination.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM date_checked')
+        dates_checked_list = cursor.fetchall()
+    except Exception as err:
+        print(err)
+        conn.rollback()
+
+    # Converting this dates_checked list into a dictionary that is accessible by the primary key depart_dest of the databse
+    dates_checked = {}
+    for row in dates_checked_list:
+        row = list(row)
+        depart_dest_column = row.pop(1)
+        if depart_dest_column in dates_checked:
+            dates_checked[depart_dest_column].append(row)
+        else:
+            dates_checked[depart_dest_column] = []
+            dates_checked[depart_dest_column].append(row)
+    print(dates_checked)
+    for val in dates_checked:
+        print(val)
     # after departure and destinations are shown;
     # you can click on one of them which will load a table via JS
     # which will show for that respective destination and departure, the dates 
@@ -171,4 +195,5 @@ def get_available_data():
     # This will then have a dropdown menu, of either show_graph, or compare graph
     return render_template('available_data.html', 
                            data_analysing_functions = data_analysing_functions,
-                           filenames = filenames)
+                           depart_dest = depart_dest,
+                           dates_checked = dates_checked)
