@@ -23,7 +23,7 @@
                   <i class="fa fa-caret-down"></i>
                 </button>
                 <div class="dropdown">
-                  <table class="table" hidden>
+                  <table class="table dates_checked" >
                     <thead>
                       <tr>
                         <th>Time when checked</th>
@@ -51,16 +51,23 @@
     </div>
     
 
+    <script>
 
+      $(document).ready(function() {
+        var button = document.querySelector(".dropdown-toggle");
+        var table = document.querySelector(".dates_checked");
+
+        button.addEventListener('click', function() {
+        if (table.style.display === 'none') {
+          table.style.display = 'block';
+        } else {
+          table.style.display = 'none';
+        }
+        });
+      });
+  </script>
     
     <script src="{{ url_for('static',filename = 'available_data.js') }}"></script>
-    <script>
-        $(document).ready(function() {
-            $('.dropdown-toggle').on('click', function(e) {
-            e.preventDefault();
-            $(this).next('.dropdown-menu').find('#myTable').removeAttr('hidden');
-            });
-        });
-    </script>
+
 </body>
 {% endblock %}
