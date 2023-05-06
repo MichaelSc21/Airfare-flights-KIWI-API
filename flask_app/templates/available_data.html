@@ -18,12 +18,15 @@
             {% for depart in depart_dest %}
             <div class="depart_dest-item mb-4 mt-4">
               <div class="depart_dest-title d-flex justify-content-between align-items-center">
+
                 <span>{{ depart[0] }}</span>
                 <button class="btn btn-link dropdown-toggle" type="button" data-toggle="dropdown">
                   <i class="fa fa-caret-down"></i>
                 </button>
-                <div class="dropdown">
-                  <table class="table dates_checked" >
+
+
+                <div class="dropdown dates_checked {{depart[0]}}" style="position:absolute; left:0;">
+                  <table class="table" >
                     <thead>
                       <tr>
                         <th>Time when checked</th>
@@ -52,22 +55,46 @@
     
 
     <script>
-
       $(document).ready(function() {
-        var button = document.querySelector(".dropdown-toggle");
-        var table = document.querySelector(".dates_checked");
+        var button = $(".dropdown-toggle");
+        var table = $(".dates_checked ");
 
-        button.addEventListener('click', function() {
-        if (table.style.display === 'none') {
-          table.style.display = 'block';
-        } else {
-          table.style.display = 'none';
-        }
+        $(".dropdown-toggle").on('click', function() {
+          $(this).siblings(".dates_checked").slideToggle(); 
         });
       });
-  </script>
+    </script>
     
-    <script src="{{ url_for('static',filename = 'available_data.js') }}"></script>
+
+    <style>
+      .depart_dest-item {
+        position: relative;
+      }
+
+      .dropdown {
+        position: relative;
+        top: 100%;
+        left: 0;
+        z-index: 1; /* Set a high z-index value */
+        display: none;
+        float: left;
+        min-width: 10rem;
+        padding: 0.5rem 0;
+        margin: 0.125rem 0 0;
+        font-size: 1rem;
+        color: #212529;
+        text-align: left;
+        list-style: none;
+        background-clip: padding-box;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 0.25rem;
+      }
+
+
+      .dropdown .table {
+        margin-top: 10px;
+      }
+  </style>
 
 </body>
 {% endblock %}
