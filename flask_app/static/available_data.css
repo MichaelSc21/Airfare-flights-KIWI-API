@@ -1,0 +1,35 @@
+.depart_dest-item {
+    position: relative;
+}
+
+.dropdown {
+    position: relative;
+    top: 100%;
+    left: 0;
+    z-index: 1;
+    display: none;
+    float: left;
+    min-width: 10rem;
+    padding: 0.5rem 0;
+    margin: 0.125rem 0 0;
+    font-size: 1rem;
+    color: #212529;
+    text-align: left;
+    list-style: none;
+    background-color: #fff; /* Add white background color */
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 0.25rem;
+}
+
+
+
+.dropdown .table {
+    margin-top: 10px;
+}
+
+.selected-tr {
+    background-color: #ffdb58; /* Change this to the blue color of your choice */
+    font-weight: 400; /* Change this to adjust the font weight of the selected row */
+    border-radius: 3px; /* Add a border radius to make the selected row stand out */
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); /* Add a subtle box shadow to make the selected row stand out */
+}
