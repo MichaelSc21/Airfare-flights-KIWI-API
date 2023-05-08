@@ -6,7 +6,7 @@
         <!-- Button group for buttons -->
         <div class="btn-group-vertical my-5" role="group">
         {% for function in data_analysing_functions %}
-            <button type="button" class="btn btn-primary">{{ function }}</button>
+            <button type="button" class="btn btn-function">{{ function }}</button>
         {% endfor %}
         </div>
     </div>
@@ -54,49 +54,10 @@
     </div>
     
 
-    <script>
-      $(document).ready(function() {
-        var button = $(".dropdown-toggle");
-        var table = $(".dates_checked ");
-
-        $(".dropdown-toggle").on('click', function() {
-          $(this).siblings(".dates_checked").slideToggle(); 
-        });
-      });
-    </script>
+    <script src="{{ url_for('static',filename = 'available_data.js') }}"></script>
     
 
-    <style> 
-      .depart_dest-item {
-        position: relative;
-      }
-
-      .dropdown {
-        position: relative;
-        top: 100%;
-        left: 0;
-        z-index: 1;
-        display: none;
-        float: left;
-        min-width: 10rem;
-        padding: 0.5rem 0;
-        margin: 0.125rem 0 0;
-        font-size: 1rem;
-        color: #212529;
-        text-align: left;
-        list-style: none;
-        background-color: #fff; /* Add white background color */
-        border: 1px solid rgba(0, 0, 0, 0.15);
-        border-radius: 0.25rem;
-      }
-
-
-
-      .dropdown .table {
-        margin-top: 10px;
-      }
-      
-  </style>
+    <link rel="stylesheet" href="{{url_for('static', filename = 'available_data.css')}}" type="text/css">
 
 </body>
 {% endblock %}
