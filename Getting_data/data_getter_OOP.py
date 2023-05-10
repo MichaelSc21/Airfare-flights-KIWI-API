@@ -203,7 +203,6 @@ class Data_getter():
 
     def insert_into_database(self):
         conn = sqlite3.connect('Data/Departure and destination.db')
-        current_time = datetime.datetime.now()
         self.time_when_added = str(datetime.datetime.now().strftime('%d/%m/%Y %H:00'))
         try:
             conn.execute('''

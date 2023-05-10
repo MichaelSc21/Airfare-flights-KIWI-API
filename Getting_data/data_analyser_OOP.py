@@ -25,8 +25,10 @@ class big_df():
                  filename=None, 
                  payload = None, 
                  filter_data_bool = False, 
-                 dateStart = None, 
-                 dateEnd = None): 
+                 date_start = None, 
+                 date_end = None): 
+        self.date_start = date_start
+        self.date_end = date_end
         if filename == None:
             self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}_{str(self.date_start).replace('/',  '-')}_to_{str(self.date_end).replace('/',  '-')}.parquet"
             self.filename = os.path.join(sys.path[0],API_details.DIR_DATA_PARQUET, self.filename)
@@ -38,8 +40,6 @@ class big_df():
         if filter_data_bool == True:
             self.filter_data()
 
-    def access_database():
-        pass
 
     # we get rid of all data outside of 2 standard deviations
     # We sort out the dataframe in ascending order
@@ -248,9 +248,12 @@ class small_df():
     def write_data_to_file_small_df(self):
         self.small_df_filename = self.filename[:-5] + '_small_df' + '.json'
         self.df.to_json(orient='split', path_or_buf=self.small_df_filename)
+    
+    
 
 
     def compare_data_small_df_plotly(self, other_small_df=None):
+        
         #self.json_df = pd.read_json(orient='split', path_or_buf=self.small_df_filename)
         mask = self.big_df['date_added'] == pd.to_datetime(date, format="%d/%m/%Y")
         self.other_date_df = small_df(big_df=self.big_df[mask],method=self.method, quantile=0.14, payload = self.payload, filename=self.filename).df  # noqa: E501
@@ -303,7 +306,7 @@ if __name__ == '__main__':
     df_names = ['LTN_to_IAS_round']
     big_dfs = {}
     small_dfs = {}
-    payload={
+    payload={  
     'fly_from': 'LTN',
     'fly_to': 'IAS',
     'date_from': '01/04/2023',
