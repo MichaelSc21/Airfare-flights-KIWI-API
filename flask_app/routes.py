@@ -145,8 +145,21 @@ def get_result():
     print('rendered graph')
     return {"ok": True, "data":json_graph1}
 
-@app.route('/available_data')
+@app.route('/available_data', methods=['GET', 'POST'])
 def get_available_data():
+    if request.is_json:
+        metadata_for_graph = request.json
+        print(metadata_for_graph)
+        print("""
+        
+        
+        
+        """)
+        metadata_for_graph_date_id = metadata_for_graph['date_id']
+        metadata_for_graph_filename = metadata_for_graph['filename']
+
+
+
     # It is going to display the destinations that have available data
     data_analysing_functions= ['Plot graph', 'Plot graph with line of best fit', 'Compare data from 2 files']
 
@@ -197,3 +210,12 @@ def get_available_data():
                            data_analysing_functions = data_analysing_functions,
                            depart_dest = depart_dest,
                            dates_checked = dates_checked)
+
+# NOTEE
+# As of thursday 11/5/2023, this format is going to be changed when I change the format of the database
+@app.route('/get_available_data/date_id=<date_id>&filename=<filename>')
+def get_available_data_back():
+    
+
+
+    return render_template('get_avaiable_data_back.html', filename = JSON_data)

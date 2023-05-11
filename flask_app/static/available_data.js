@@ -22,25 +22,36 @@ $(document).ready(function() {
         // Check if a row is selected
         if (selectedRow.length === 1) {
           // Extract data from selected row
-          var timeChecked = selectedRow.find("td").eq(0).text();
-          var fileStart = selectedRow.find("td").eq(1).text();
-          var fileEnd = selectedRow.find("td").eq(2).text();
-
-          // Send GET request to /show_data with extracted data
-          $.get('/show_data', {
-            'time_checked': timeChecked,
-            'file_start': fileStart,
-            'file_end': fileEnd
-          }, function(data) {
-            // Handle response from server if necessary
-          });
+          var classList = $(selectedRow).attr('class');
+          var classes = classList.split(' ');
+          var date_id = classes[0]
+          var filename = classes[1]
+          var data = {
+          date_id: date_id,
+          filename: filename
+        };
+        
+        // Send GET request to /show_data with extracted data
+        $.ajax({
+          url: '/available_data',
+          type: 'POST',
+          data: JSON.stringify(data),
+          contentType: 'application/json',
+          success: function(response) {
+            // Handle the response from the server
+          },
+          error: function(xhr, status, error) {
+            console.log(xhr)
+            console.log(status)
+            console.log(error)
+          }
+        });
         }
         else {
             alert('You can only select 1 file for this function')
         }
-      } 
 
-      else if (buttonText == "Compare data from 2 files") {
+      } else if (buttonText == "Compare data from 2 files") {
         // Get the selected rows data
         var selectedRows = $(".table tbody tr.selected-tr");
 
@@ -74,8 +85,13 @@ $(document).ready(function() {
         // Deselect all other rows
         //$(this).siblings().removeClass("selected-tr");
         var countSelectedRows = document.querySelectorAll('.selected-tr').length;
+        
         if (countSelectedRows > 1) {
+          if ($(this).hasClass('selected-tr')) {
+            $(this).removeClass("selected-tr");
+          } else {
             alert('You can select at the very most 2 files')
+          }
         }
         else {
             // Toggle selected class for clicked row
