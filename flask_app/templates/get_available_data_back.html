@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+{% block content %}
+
+	<div class="loading-container">
+		<div class="loading-spinner"></div>
+		<div class="loading-text">Loading... This will take a minute</div>
+	</div>
+	<div class="row p-1">
+		<div class="card m-auto" style="width: 90%;">
+			<div class="card-body">
+				<div class="chart"></div>
+				<p class="chart">Lorem ipsum dolor sit amet consectetur adipisicing elit. 
+					Quibusdam beatae eos esse hic tempore, itaque dolor quod. Eligendi debitis 
+					doloremque itaque architecto velit autem suscipit ut laborum optio maxime at 
+					facere perspiciatis quae molestiae nemo, saepe impedit. Quaerat corporis eius 
+					libero fugit. Debitis non nobis repudiandae ex soluta vero repellendus omnis eos, 
+					voluptate mollitia dolorem asperiores sint itaque consequuntur voluptatum totam 
+					fugit aut nemo maiores! Laboriosam quidem error possimus nobis eligendi dolor aut 
+					ullam voluptas officiis similique placeat modi, eaque voluptates dolores odit optio, 
+					pariatur molestias. Eum praesentium totam error aliquam,
+					tempore in quia exercitationem! Temporibus corporis asperiores esse ipsum?</p>
+			</div>
+		</div>
+	</div>
+		
+		<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+		<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+		<script type="text/javascript">
+			// Use Jinja syntax to get the value of the session variable 'json_graph'
+			var graphs1 = {{ session["json_graph"]|default("null") | safe}};
+			
+			// Check if session variable 'json_graph' exists
+			if (graphs1 !== null) {
+				console.log('It already has the json_graph session variable saved')
+				// If session variable exists, render graph using data from session
+				document.querySelector('.loading-container').style.display = 'none';
+				var chart = document.getElementsByClassName('chart')[0];
+				// Add a css class created in the main.css to slide the items from the left
+				chart.classList.add('show')
+				document.querySelector('p.chart').classList.add('show')
+
+				Plotly.newPlot(chart, graphs1,{});
+			} else {
+				$(document).ready(function() {	
+					fetchData();
+				});
+			}	
+			async function fetchData() {
+				try {
+					const response = await fetch('/get_result');
+					if (response.ok) {
+						console.log('it fetched the data from the get_result flask route')
+						document.querySelector('.loading-container').style.display = 'none';
+						// This will get the data that is returned when we make an HTTP request to /get_result
+						const data = await response.json();
+						console.log(data)
+						graphs1 = JSON.parse({{JSON_data}});
+						var chart = document.getElementsByClassName('chart')[0];
+						// Add a css class created in the main.css to slide the items from the left
+						chart.classList.add('show')
+						document.querySelector('p.chart').classList.add('show')
+						Plotly.newPlot(chart, graphs1.data,{});
+					} else {
+						console.error('Error fetching data:', response.status);
+					}
+				} catch (error) {
+					console.error('Error fetching data:', error);
+				}
+			}
+				
+		</script>
+	{% endblock %}
