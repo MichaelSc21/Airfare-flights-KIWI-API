@@ -37,9 +37,9 @@
                     </thead>
                     <tbody>
                       {% for row in dates_checked[depart[0]] %}
-                        <tr>
-                          <td>{{ row[0]}}</td>
-                          <td>{{ row[2] }}</td>
+                        <tr class="{{row[0]}} {{row[1]}}">
+                          <td>{{ row[0] }}</td>
+                          <td>{{ row[1] }}</td>
                           <td>{{ row[3] }}</td>
                           <!-- Add more column values here as needed -->
                         </tr>
