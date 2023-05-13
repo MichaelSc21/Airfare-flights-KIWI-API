@@ -39,12 +39,23 @@ $(document).ready(function() {
         
           // Send GET request to /show_data with extracted data
           var csrf_token = document.getElementById("csrf_token").value;
-          var xhr = new XMLHttpRequest();
-          xhr.open("POST", "/available_data");
-          xhr.setRequestHeader("Content-Type", "application/json");
-          xhr.setRequestHeader('X-CSRFToken', csrf_token);
-          xhr.send(JSON.stringify(data));
-          
+          $.ajax({
+            url: '/available_data',
+            type: 'POST',
+            headers: {
+              'X-CSRFToken': csrf_token
+            },
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            success: function(response) {
+              console.log('response')
+            },
+            error: function(xhr, status, error) {
+              console.log(xhr)
+              console.log(status)
+              console.log(error)
+            }
+          });
         }
         else {
             alert('You can only select 1 file for this function')
