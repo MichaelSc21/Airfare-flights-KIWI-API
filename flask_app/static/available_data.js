@@ -24,28 +24,27 @@ $(document).ready(function() {
           // Extract data from selected row
           var classList = $(selectedRow).attr('class');
           var classes = classList.split(' ');
-          var date_id = classes[0]
-          var filename = classes[1]
+          var date_id = classes[0] + ' ' +  classes[1]
+          
+          const startIndex = classList.indexOf("d");
+          // Get the index of the first occurrence of "selected-tr" in the class string
+          const endIndex = classList.indexOf("selected-tr");
+          // Extract the substring between the "d" and "selected-tr" using the substring method
+          const filename = classList.substring(startIndex, endIndex);
+                    
           var data = {
           date_id: date_id,
           filename: filename
-        };
+          };
         
-        // Send GET request to /show_data with extracted data
-        $.ajax({
-          url: '/available_data',
-          type: 'POST',
-          data: JSON.stringify(data),
-          contentType: 'application/json',
-          success: function(response) {
-            // Handle the response from the server
-          },
-          error: function(xhr, status, error) {
-            console.log(xhr)
-            console.log(status)
-            console.log(error)
-          }
-        });
+          // Send GET request to /show_data with extracted data
+          var csrf_token = document.getElementById("csrf_token").value;
+          var xhr = new XMLHttpRequest();
+          xhr.open("POST", "/available_data");
+          xhr.setRequestHeader("Content-Type", "application/json");
+          xhr.setRequestHeader('X-CSRFToken', csrf_token);
+          xhr.send(JSON.stringify(data));
+          
         }
         else {
             alert('You can only select 1 file for this function')

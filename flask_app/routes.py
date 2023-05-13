@@ -1,16 +1,14 @@
 import sys 
 import os
 #sys.path.insert(0, os.getcwd())
-
-from flask_wtf.csrf import CSRFProtect
 from flask_app.forms import FlightRequestForm
 from flask_app import app
-from flask import render_template, request, session
+from flask import render_template, request, session, redirect
 import sqlite3
 
 import Getting_data.API_details as API_details
 import Getting_data.data_getter_OOP as data_getter_OOP
-import Getting_data.data_analyser_OOP as data_analyser_OOP 
+import Getting_data.data_analyser_OOP as data_analyser_OOP
 
 Data_getter = data_getter_OOP.Data_getter
 big_df= data_analyser_OOP.big_df
@@ -68,9 +66,10 @@ def payload_form():
     else:
         return render_template('payload_form.html', payload_format=payload)
 
-app.secret_key = API_details.FORMS_KEY  # Set your own secret key for Flask app
-csrf = CSRFProtect(app)
-#app.config["CACHE_TYPE"] = "null"
+
+#app.secret_key = API_details.FORMS_KEY  # Set your own secret key for Flask app
+#csrf = CSRFProtect(app)
+
 
 @app.route('/flight_request', methods=['GET', 'POST'])
 def flight_request():
@@ -148,16 +147,23 @@ def get_result():
 @app.route('/available_data', methods=['GET', 'POST'])
 def get_available_data():
     if request.is_json:
+        
+
         metadata_for_graph = request.json
-        print(metadata_for_graph)
         print("""
         
         
         
         """)
-        metadata_for_graph_date_id = metadata_for_graph['date_id']
-        metadata_for_graph_filename = metadata_for_graph['filename']
+        print(metadata_for_graph['filename'])
+        big_dfs = big_df(filename = metadata_for_graph['filename'], 
+                                filter_data_bool=True)
+        small_dfs = big_dfs.create_small_df(method = 'quantile', quantile =0.14)
+        small_dfs.plot_polynomial_plotly(12)
 
+        json_graph1 = small_dfs.return_json()
+        
+        return render_template('get_available_data_back.html', json_graph = json_graph1)
 
 
     # It is going to display the destinations that have available data
@@ -197,9 +203,7 @@ def get_available_data():
         else:
             dates_checked[depart_dest_column] = []
             dates_checked[depart_dest_column].append(row)
-    print(dates_checked)
-    for val in dates_checked:
-        print(val)
+
     # after departure and destinations are shown;
     # you can click on one of them which will load a table via JS
     # which will show for that respective destination and departure, the dates 
@@ -207,15 +211,27 @@ def get_available_data():
 
     # This will then have a dropdown menu, of either show_graph, or compare graph
     return render_template('available_data.html', 
-                           data_analysing_functions = data_analysing_functions,
-                           depart_dest = depart_dest,
-                           dates_checked = dates_checked)
+                        data_analysing_functions = data_analysing_functions,
+                        depart_dest = depart_dest,
+                        dates_checked = dates_checked)
 
 # NOTEE
 # As of thursday 11/5/2023, this format is going to be changed when I change the format of the database
-@app.route('/get_available_data/date_id=<date_id>&filename=<filename>')
+@app.route('/get_available_data')
 def get_available_data_back():
+    metadata_for_graph = request.json
+    print("""
     
+    
+    
+    """)
+    print(metadata_for_graph['filename'])
+    big_dfs = big_df(filename = metadata_for_graph['filename'], 
+                            filter_data_bool=True)
+    small_dfs = big_dfs.create_small_df(method = 'quantile', quantile =0.14)
+    small_dfs.plot_polynomial_plotly(12)
 
+    json_graph1 = small_dfs.return_json()
+    
+    return render_template('get_available_data_back.html', json_graph = json_graph1)
 
-    return render_template('get_avaiable_data_back.html', filename = JSON_data)
