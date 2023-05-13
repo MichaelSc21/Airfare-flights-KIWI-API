@@ -48,7 +48,7 @@ $(document).ready(function() {
             data: JSON.stringify(data),
             contentType: 'application/json',
             success: function(response) {
-              console.log('response')
+              $('html').html(data);
             },
             error: function(xhr, status, error) {
               console.log(xhr)

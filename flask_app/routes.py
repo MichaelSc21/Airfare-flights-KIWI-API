@@ -150,10 +150,21 @@ def get_available_data():
         
 
         metadata_for_graph = request.json
+        print(metadata_for_graph['filename'])
+        print("""
+        
+        
+        
+        
+        """)
+        big_dfs = big_df(filename = metadata_for_graph['filename'], 
+                                filter_data_bool=True)
+        small_dfs = big_dfs.create_small_df(method = 'quantile', quantile =0.14)
+        small_dfs.plot_polynomial_plotly(12)
 
-        return redirect(url_for('get_available_data_back', 
-                                date_id = metadata_for_graph['date_id'], 
-                                filename = metadata_for_graph['filename']))
+        json_graph1 = small_dfs.return_json()
+        
+        return render_template('get_available_data_back.html', json_graph = json_graph1)    
 
 
     # It is going to display the destinations that have available data
