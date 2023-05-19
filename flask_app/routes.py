@@ -3,7 +3,7 @@ import os
 #sys.path.insert(0, os.getcwd())
 from flask_app.forms import FlightRequestForm
 from flask_app import app
-from flask import render_template, request, session, redirect, url_for
+from flask import render_template, request, session, redirect, url_for, jsonify
 import sqlite3
 
 import Getting_data.API_details as API_details
@@ -150,7 +150,7 @@ def get_available_data():
         
 
         metadata_for_graph = request.json
-        print(metadata_for_graph['filename'])
+        print(metadata_for_graph)
         print("""
         
         
@@ -163,9 +163,11 @@ def get_available_data():
         small_dfs.plot_polynomial_plotly(12)
 
         json_graph1 = small_dfs.return_json()
+        #session['json_graph'] = json_graph1
+        #return render_template('get_available_data_back.html', json_graph = json_graph1)    
+        #return redirect('/get_available_data')
+        return jsonify(json_graph1)
         
-        return render_template('get_available_data_back.html', json_graph = json_graph1)    
-
 
     # It is going to display the destinations that have available data
     data_analysing_functions= ['Plot graph', 'Plot graph with line of best fit', 'Compare data from 2 files']
@@ -220,7 +222,7 @@ def get_available_data():
 # As of thursday 11/5/2023, this format is going to be changed when I change the format of the database
 @app.route('/get_available_data')
 def get_available_data_back():
-    metadata_for_graph = {'filename': request.args.get('filename'),
+    """metadata_for_graph = {'filename': request.args.get('filename'),
                           'date_id': request.args.get('date_id')}
     print(metadata_for_graph['filename'])
     print("""
@@ -230,11 +232,11 @@ def get_available_data_back():
     
     """)
     big_dfs = big_df(filename = metadata_for_graph['filename'], 
-                            filter_data_bool=True)
+                                filter_data_bool=True)
     small_dfs = big_dfs.create_small_df(method = 'quantile', quantile =0.14)
     small_dfs.plot_polynomial_plotly(12)
 
     json_graph1 = small_dfs.return_json()
-    
-    return render_template('get_available_data_back.html', json_graph = json_graph1)
+    """
+    return render_template('get_available_data_back.html', json_graph = session['json_graph'])
 
