@@ -33,10 +33,10 @@ $(document).ready(function() {
           const filename = classList.substring(startIndex, endIndex);
                     
           var data = {
-          date_id: date_id,
-          filename: filename
+          "date_id": date_id,
+          "filename": filename
           };
-        
+          console.log(data)
           // Send GET request to /show_data with extracted data
           var csrf_token = document.getElementById("csrf_token").value;
           $.ajax({
@@ -48,7 +48,13 @@ $(document).ready(function() {
             data: JSON.stringify(data),
             contentType: 'application/json',
             success: function(response) {
-              $('html').html(data);
+              //$('html').html(response);
+              //window.location ='/get_available_data'
+              //document.write(response)
+              var json_graph = JSON.parse(response)
+              //rendered = jinja.render(url_for('/get_available_data_back', response))
+              var url = "{{ url_for('get_available_data_back.html') }}";
+              $('html').load(url, json_graph);
             },
             error: function(xhr, status, error) {
               console.log(xhr)
