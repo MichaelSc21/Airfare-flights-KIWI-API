@@ -24,14 +24,15 @@ $(document).ready(function() {
           // Extract data from selected row
           var classList = $(selectedRow).attr('class');
           var classes = classList.split(' ');
-          var date_id = classes[0] + ' ' +  classes[1]
+          var date_id = classes[0]
           
           const startIndex = classList.indexOf("d");
           // Get the index of the first occurrence of "selected-tr" in the class string
           const endIndex = classList.indexOf("selected-tr");
           // Extract the substring between the "d" and "selected-tr" using the substring method
-          const filename = classList.substring(startIndex, endIndex);
-                    
+          //const filename = classList.substring(startIndex, endIndex);
+          const filename = classes[1]        
+          
           var data = {
           "date_id": date_id,
           "filename": filename
@@ -39,7 +40,9 @@ $(document).ready(function() {
           console.log(data)
           // Send GET request to /show_data with extracted data
           var csrf_token = document.getElementById("csrf_token").value;
-          $.ajax({
+          console.log('/get_available_data_back/date_id="'+date_id+'"&filename="' + filename + '"')
+          window.location = '/get_available_data_back/date_id='+date_id+'&filename=' + filename
+          /*$.ajax({
             url: '/available_data',
             type: 'POST',
             headers: {
@@ -61,7 +64,7 @@ $(document).ready(function() {
               console.log(status)
               console.log(error)
             }
-          });
+          });*/
         }
         else {
             alert('You can only select 1 file for this function')
