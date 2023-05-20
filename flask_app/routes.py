@@ -84,7 +84,7 @@ def flight_request():
         del payload['csrf_token']
 
         if payload['limit'] == None:
-            payload['limt'] = 1000
+            payload['limit'] = 1000
         if payload['flight_type'] == 'One-way':
             payload['flight_type'] = 'oneway'
         else:
@@ -146,7 +146,7 @@ def get_result():
 
 @app.route('/available_data', methods=['GET', 'POST'])
 def get_available_data():
-    if request.is_json:
+    if request.method == 'POST':
         
 
         metadata_for_graph = request.json
@@ -164,9 +164,9 @@ def get_available_data():
 
         json_graph1 = small_dfs.return_json()
         #session['json_graph'] = json_graph1
-        #return render_template('get_available_data_back.html', json_graph = json_graph1)    
+        return render_template('get_available_data_back.html', json_graph = json_graph1)    
         #return redirect('/get_available_data')
-        return jsonify(json_graph1)
+        
         
 
     # It is going to display the destinations that have available data
@@ -201,6 +201,13 @@ def get_available_data():
     for row in dates_checked_list:
         row = list(row)
         depart_dest_column = row.pop(1)
+        #Only showing the filename and not the whole path
+        index = row[1].find('Parquet_files\\')
+        row[1] = row[1][index + len('Parquet_files\\'):]
+        #Changin the format of the date
+        row[0] = row[0].replace('/', '-')
+        row[0] = row[0].replace(' ', '_')
+        print(row[0])
         if depart_dest_column in dates_checked:
             dates_checked[depart_dest_column].append(row)
         else:
@@ -220,10 +227,10 @@ def get_available_data():
 
 # NOTEE
 # As of thursday 11/5/2023, this format is going to be changed when I change the format of the database
-@app.route('/get_available_data')
-def get_available_data_back():
-    """metadata_for_graph = {'filename': request.args.get('filename'),
-                          'date_id': request.args.get('date_id')}
+@app.get('/get_available_data_back/date_id=<date_id>&filename=<filename>')
+def get_available_data_back(date_id, filename):
+    metadata_for_graph = {'filename': filename,
+                          'date_id': date_id}
     print(metadata_for_graph['filename'])
     print("""
     
@@ -231,12 +238,12 @@ def get_available_data_back():
     
     
     """)
-    big_dfs = big_df(filename = metadata_for_graph['filename'], 
+    big_dfs = big_df(filename = "D:\OneDrive\Coding\A-level\Airfare-flights KIWI API\Data\Parquet_files\\" + metadata_for_graph['filename'], 
                                 filter_data_bool=True)
     small_dfs = big_dfs.create_small_df(method = 'quantile', quantile =0.14)
     small_dfs.plot_polynomial_plotly(12)
 
     json_graph1 = small_dfs.return_json()
-    """
-    return render_template('get_available_data_back.html', json_graph = session['json_graph'])
+    print(json_graph1)
+    return render_template('get_available_data_back.html', json_graph = json_graph1)
 
