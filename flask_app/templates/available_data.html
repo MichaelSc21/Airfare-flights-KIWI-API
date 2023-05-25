@@ -5,6 +5,7 @@
     <div class="col-md-3 mx-3">
         <!-- Button group for buttons -->
         <div class="btn-group-vertical my-5" role="group">
+        <input type="hidden" id="csrf_token" value="{{ csrf_token() }}">
         {% for function in data_analysing_functions %}
             <button type="button" class="btn btn-function">{{ function }}</button>
         {% endfor %}
