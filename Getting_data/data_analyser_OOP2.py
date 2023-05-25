@@ -14,7 +14,7 @@ from datetime import date
 import sqlite3
 
 from importlib import reload
-import API_details as API_details
+import Getting_data.API_details as API_details
 #from Getting_data.data_getter_OOP import Data_getter
 reload(API_details)
 
