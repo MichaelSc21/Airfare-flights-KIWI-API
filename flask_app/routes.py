@@ -164,7 +164,7 @@ def get_available_data():
 
         json_graph1 = small_dfs.return_json()
         #session['json_graph'] = json_graph1
-        return render_template('get_available_data_back.html', json_graph = json_graph1)    
+        return render_template('templates/get_available_data_back.html', json_graph = json_graph1)    
         #return redirect('/get_available_data')
         
         
@@ -206,14 +206,14 @@ def get_available_data():
         row[1] = row[1][index + len('Parquet_files\\'):]
         #Changin the format of the date
         row[0] = row[0].replace('/', '-')
-        row[0] = row[0].replace(' ', '_')
+        #row[0] = row[0].replace(' ', '_')
         print(row[0])
         if depart_dest_column in dates_checked:
             dates_checked[depart_dest_column].append(row)
         else:
             dates_checked[depart_dest_column] = []
             dates_checked[depart_dest_column].append(row)
-
+    print(dates_checked)
     # after departure and destinations are shown;
     # you can click on one of them which will load a table via JS
     # which will show for that respective destination and departure, the dates 
@@ -227,7 +227,7 @@ def get_available_data():
 
 # NOTEE
 # As of thursday 11/5/2023, this format is going to be changed when I change the format of the database
-@app.get('/get_available_data_back/date_id=<date_id>&filename=<filename>')
+@app.get('/get_available_data_back/date_id1=<date_id1>&filename1=<filename1>&date_id2=<date_id2>&filename2=<filename2>')
 def get_available_data_back(date_id, filename):
     metadata_for_graph = {'filename': filename,
                           'date_id': date_id}
