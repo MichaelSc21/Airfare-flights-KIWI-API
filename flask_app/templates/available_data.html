@@ -5,60 +5,164 @@
     <div class="col-md-3 mx-3">
         <!-- Button group for buttons -->
         <div class="btn-group-vertical my-5" role="group">
-        <input type="hidden" id="csrf_token" value="{{ csrf_token() }}">
-        {% for function in data_analysing_functions %}
+            <input type="hidden" id="csrf_token" value="{{ csrf_token() }}">
+            {% for function in data_analysing_functions %}
             <button type="button" class="btn btn-function">{{ function }}</button>
-        {% endfor %}
+            {% endfor %}
         </div>
     </div>
-
-
+    
+    
     <div class="col-md-8 mx-5">
         <!-- Checkboxes for filenames -->
         <div class="form-check my-5 filename-list">
             {% for depart in depart_dest %}
             <div class="depart_dest-item mb-4 mt-4">
-              <div class="depart_dest-title d-flex justify-content-between align-items-center">
-
-                <span>{{ depart[0] }}</span>
-                <button class="btn btn-link dropdown-toggle" type="button" data-toggle="dropdown" data-target=".{{ depart[0] }}-table">
-                  <i class="fa fa-caret-down"></i>
-                </button>
-
-
-                <div class="dropdown {{ depart[0] }}-table  dates_checked" style="position:absolute; left:0;">
-                  <table class="table" >
-                    <thead>
-                      <tr>
-                        <th>Time when checked</th>
-                        <th>Date start of the file</th>
-                        <th>Date end of the file</th>
-                        <!-- Add more column headers here as needed -->
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for row in dates_checked[depart[0]] %}
-                        <tr class="{{row[0]}} {{row[1]}}">
-                          <td>{{ row[0] }}</td>
-                          <td>{{ row[1] }}</td>
-                          <td>{{ row[3] }}</td>
-                          <!-- Add more column values here as needed -->
-                        </tr>
-                      {% endfor %}
-                    </tbody>
-                  </table>
+                <div class="depart_dest-title d-flex justify-content-between align-items-center">
+                    
+                    <span>{{ depart[0] }}</span>
+                    <button class="btn btn-link dropdown-toggle" type="button" data-toggle="dropdown" data-target=".{{ depart[0] }}-table">
+                        <i class="fa fa-caret-down"></i>
+                    </button>
+                    
+                    
+                    <div class="dropdown {{ depart[0] }}-table  dates_checked" style="position:absolute; left:0;">
+                        <table class="table" >
+                            <thead>
+                                <tr>
+                                    <th>Time when checked</th>
+                                    <th>Date start of the file</th>
+                                    <th>Date end of the file</th>
+                                    <!-- Add more column headers here as needed -->
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in dates_checked[depart[0]] %}
+                                <tr class="{{row[0]}} {{row[1]}}">
+                                    <td>{{ row[0] }}</td>
+                                    <td>{{ row[1] }}</td>
+                                    <td>{{ row[3] }}</td>
+                                    <!-- Add more column values here as needed -->
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-              </div>
             </div>
             {% endfor %}
         </div>
     </div>
     
 
-    <script src="{{ url_for('static',filename = 'available_data.js') }}"></script>
-    
-
     <link rel="stylesheet" href="{{url_for('static', filename = 'available_data.css')}}" type="text/css">
-
+    
+    <script>
+        $(document).ready(function() {
+            var button = $(".dropdown-toggle");
+            var table = $(".dates_checked ");
+            
+            $(".dropdown-toggle").on('click', function() {
+                $(this).siblings(".dates_checked").slideToggle(); 
+            });
+        });
+        $(document).ready(function() {
+            // Add event listener to all buttons
+            $(".btn-function").on('click', function() {
+                // Get the text content of the button
+                var buttonText = $(this).text();
+                // Get the selected row data
+                var selectedRows = $(".table tbody tr.selected-tr");
+                
+                // Check which button was clicked
+                if (buttonText == "Plot graph" || buttonText == "Plot graph with line of best fit") {
+                    
+                    // Check if a row is selected
+                    if (selectedRows.length === 1) {
+                        // Extract data from selected row
+                        var classList = $(selectedRows).attr('class');
+                        var classes = classList.split(' ');
+                        var date_id = classes[0] + "_" + classes[1];
+                        
+                        //const startIndex = classList.indexOf("d");
+                        // Get the index of the first occurrence of "selected-tr" in the class string
+                        //const endIndex = classList.indexOf("selected-tr");
+                        // Extract the substring between the "d" and "selected-tr" using the substring method
+                        //const filename = classList.substring(startIndex, endIndex);
+                        const filename = classes[2]        
+                        
+                        var data = {
+                            "date_id": date_id,
+                            "filename": filename
+                        };
+                        console.log(data)
+                        // Send GET request to /show_data with extracted data
+                        var csrf_token = document.getElementById("csrf_token").value;
+                        console.log('/get_available_data_back/date_id="'+date_id+'"&filename="' + filename + '"');
+                        window_location_string = '/get_available_data_back/date_id1='+date_id+'&filename1=' + filename + 'date_id2=&filename2=';
+                        window.location = '/get_available_data_back/date_id='+date_id+'&filename=' + filename;
+                        
+                    }
+                    else {
+                        alert('You can only select 1 file for this function')
+                    }
+                    
+                } else if (buttonText == "Compare data from 2 files") {
+                    // Get the selected rows data
+                    
+                    // Check if two rows are selected
+                    if (selectedRows.length === 2) {
+                        // Extract data from selected rows
+                        var data={
+                            "date_id": [],
+                            "filename": []
+                        }
+                        var window_location_string = '/get_available_data_back/'
+                        for (var i = 0; i < selectedRows.length; i++) {
+                            var row = selectedRows[i]
+                            var classList = $(row).attr('class');
+                            var classes = classList.split(' ');
+                            const date_id = classes[0] + "_" + classes[1];
+                            const filename = classes[2] 
+                            window_location_string += 'date_id' + i + "=" + date_id + "&"
+                            window_location_string += 'filename' + i + "=" + filename + "&"
+                            data["date_id"].push(date_id)
+                            data["filename"].push(filename)
+                        }
+                        console.log(data)
+                        // gets rid of the "&" character that is added at the end of the string
+                        window_location_string = window_location_string.slice(0, -1) 
+                        window.location = window_location_string
+                        console.log(window_location_string)
+                        
+                    }
+                }
+            });
+            
+            // Add event listener to all table rows
+            $(".table tbody tr").on('click', function() {
+                // Deselect all other rows
+                //$(this).siblings().removeClass("selected-tr");
+                var countSelectedRows = document.querySelectorAll('.selected-tr').length;
+                console.log(countSelectedRows)
+                if (countSelectedRows > 1) {
+                    if ($(this).hasClass('selected-tr')) {
+                        $(this).removeClass("selected-tr");
+                    } else {
+                        alert('You can select at the very most 2 files')
+                    }
+                }
+                else {
+                    // Toggle selected class for clicked row
+                    $(this).toggleClass("selected-tr");
+                }
+                
+                
+                
+                
+            });
+        });
+    </script>
+    
 </body>
 {% endblock %}
