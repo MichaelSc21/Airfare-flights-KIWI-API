@@ -15,6 +15,7 @@ import datetime
 
 
 class Data_getter():
+    # remember to find a proper way to assingn appropriate values to date_start and date_end
     def __init__(self, 
                  payload, 
                  sanitise_data=False, 
@@ -29,15 +30,21 @@ class Data_getter():
             self.oneway = False
             self.round = True
 
-        self.date_start= date_start
-        self.date_end = date_end
+        self.date_start = self.payload['fly_from']
+        if self.round:
+            self.date_end = self.payload['return_to']
+        else:
+            self.date_end = self.payload['date_to']
+        #self.date_start= date_start
+        #self.date_end = date_end
+        
         self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}_{str(self.date_start).replace('/',  '-')}_to_{str(self.date_end).replace('/',  '-')}.parquet"
         self.filename = os.path.join(sys.path[0],API_details.DIR_DATA_PARQUET, self.filename)
         self.sanitise = sanitise_data
         self.delete_data = delete_data
         if self.delete_data:
             self.write_data("o")
-        self.insert_into_database()
+        
 
     def get_data(self):
         url  = "https://api.tequila.kiwi.com/v2/search?"
@@ -211,8 +218,7 @@ class Data_getter():
             ''', (self.time_when_added, 
                 f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}",
                 self.filename,
-                self.date_start
-                ,
+                self.date_start,
                 self.date_end))
             print('got to here')
             depart_dest = f"""{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}"""
@@ -262,6 +268,8 @@ class Data_getter():
                     count += 1
                     worker_list = []
                     worker_count =0
+
+        self.insert_into_database()
 
 
                 
