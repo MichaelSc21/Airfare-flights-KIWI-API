@@ -89,18 +89,13 @@ def flight_request():
             payload['flight_type'] = 'oneway'
         else:
             payload['flight_type'] = 'round'
-        payload1 = {}
-        for key, value in payload.items():
-            if  payload[key] == None or  payload[key] == "":
-                pass
-            else:
-                print(payload[key])
-                payload1[key] = value
-        payload = payload1
-        #if 'json_graph' in session:
-        #    print(session['json_graph'])
-        #   del session['json_graph']
-        session['payload'] = payload
+        
+        filtered_dict = {key: value for key, value in payload.items() if value != "" and value is not None}
+        print(filtered_dict)
+
+        
+
+
         return render_template('flight_request_data.html', )
 
     return render_template('flight_request.html', form=form)
@@ -108,6 +103,7 @@ def flight_request():
 
 @app.route('/get_result')
 def get_result():
+    # Example of the format the payload should be like
     """payload={
     'fly_from': 'LTN',
     'fly_to': 'IAS',
@@ -126,13 +122,11 @@ def get_result():
     payload = session.get('payload')
     getter = Data_getter(payload, 
                         sanitise_data = True, 
-                        delete_data = False,
-                        dateStart = '01/04/2023',
-                        dateEnd = '16/05/2023')
-    #getter.using_threads2(max_workers=2, 
-     #                   period = 16, 
-      #                  nights_in_dst=7, 
-       #                 max = 1)
+                        delete_data = False,)
+    getter.using_threads2(max_workers=2, 
+                        period = 16, 
+                        nights_in_dst=7, 
+                        max = 1)
     big_dfs = big_df(filename = getter.filename, 
                                 filter_data_bool=True, 
                                 payload = payload)
@@ -140,7 +134,7 @@ def get_result():
     small_dfs.plot_polynomial_plotly(12)
 
     json_graph1 = small_dfs.return_json()
-    session['json_graph'] = json_graph1
+    #session['json_graph'] = json_graph1
     print('rendered graph')
     return {"ok": True, "data":json_graph1}
 
@@ -227,11 +221,17 @@ def get_available_data():
 
 # NOTEE
 # As of thursday 11/5/2023, this format is going to be changed when I change the format of the database
-@app.get('/get_available_data_back/date_id1=<date_id1>&filename1=<filename1>&date_id2=<date_id2>&filename2=<filename2>')
-def get_available_data_back(date_id, filename):
-    metadata_for_graph = {'filename': filename,
-                          'date_id': date_id}
-    print(metadata_for_graph['filename'])
+
+#@app.get('/get_available_data_back/date_id1=<path:date_id1>&filename1=<path:filename1>&date_id2=<path:date_id2>&filename2=<path:filename2>')
+@app.get('/get_available_data_back/date_id0=<date_id0>&filename0=<filename0>&date_id1=<date_id1>&filename1=<filename1>')
+def get_available_data_back(date_id0, filename0, date_id1, filename1):
+    metadata_for_graph = {
+        'date_id0': date_id0,
+        'filename0': filename0,
+        'date_id1': date_id1,
+        'filename1': filename1,
+                          }
+    print(metadata_for_graph)
     print("""
     
     
