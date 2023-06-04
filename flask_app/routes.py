@@ -1,5 +1,7 @@
 import sys 
 import os
+import logging 
+from logging.handlers import RotatingFileHandler
 #sys.path.insert(0, os.getcwd())
 from flask_app.forms import FlightRequestForm
 from flask_app import app
@@ -14,6 +16,33 @@ Data_getter = data_getter_OOP.Data_getter
 big_df= data_analyser_OOP.big_df
 small_df = data_analyser_OOP.small_df
 
+# Setting up the basic format for all loggers
+logging.basicConfig(
+    format="%(name)s: %(asctime)s | %(levelname)s | %(filename)s:%(lineno)s | %(process)d >>> %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%SZ",
+)
+logging.basicConfig(level=logging.DEBUG)
+
+# setting up the format of the logger within the routes module
+logger = logging.getLogger(__name__)
+fileHandlerRoutes = RotatingFileHandler('logging.txt', backupCount=1, maxBytes=5000000)
+
+fmt = logging.Formatter(
+    """%(name)s: %(asctime)s | %(levelname)s | %(filename)s:%(lineno)s | %(process)d >>>
+%(message)s"""
+)
+fileHandlerRoutes.setFormatter(fmt)
+fileHandlerRoutes.setLevel(logging.DEBUG)
+logger.addHandler(fileHandlerRoutes)
+
+# Exceptions will be written to my logging file
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+    logger.critical('Uncaught exception', stack_info=True)
+
+sys.excepthook = handle_exception
 
 
 
@@ -73,10 +102,8 @@ def payload_form():
 
 @app.route('/flight_request', methods=['GET', 'POST'])
 def flight_request():
+    logging.info('We are making a request for data for flights')
     form = FlightRequestForm()
-
-    
-    print(session)
     if form.validate_on_submit():
         #Note: you have to sort out the passing of parameters into the functions
         payload = dict(form.data)
@@ -91,8 +118,9 @@ def flight_request():
             payload['flight_type'] = 'round'
         
         filtered_dict = {key: value for key, value in payload.items() if value != "" and value is not None}
-        print(filtered_dict)
-
+        #print(filtered_dict)
+        logging.debug("""This is the dictionary for the data that was passed to the data_getter_OOP module:
+                      %(filtered_dict)""")
         
 
 
