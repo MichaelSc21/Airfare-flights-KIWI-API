@@ -16,27 +16,22 @@ Data_getter = data_getter_OOP.Data_getter
 big_df= data_analyser_OOP.big_df
 small_df = data_analyser_OOP.small_df
 
-# Setting up the basic format for all loggers
-logging.basicConfig(
-    format="%(name)s: %(asctime)s | %(levelname)s | %(filename)s:%(lineno)s | %(process)d >>> %(message)s",
-    datefmt="%Y-%m-%dT%H:%M:%SZ",
-)
-logging.basicConfig(level=logging.DEBUG)
 
+logging.basicConfig(filename='logging.txt', level=logging.DEBUG, format=f'%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
+ 
 # setting up the format of the logger within the routes module
-logger = logging.getLogger(__name__)
-fileHandlerRoutes = RotatingFileHandler('logging.txt', backupCount=1, maxBytes=5000000)
+"""logger = logging.getLogger('routes_logger')
+fileHandlerRoutes = logging.FileHandler('logging.txt')
 
 fmt = logging.Formatter(
-    """%(name)s: %(asctime)s | %(levelname)s | %(filename)s:%(lineno)s | %(process)d >>>
-%(message)s"""
+    "%(name)s: %(asctime)s | %(levelname)s | %(filename)s:%(lineno)s | %(process)d >>> /n%(message)s"
 )
 fileHandlerRoutes.setFormatter(fmt)
 fileHandlerRoutes.setLevel(logging.DEBUG)
-logger.addHandler(fileHandlerRoutes)
+app.logger.addHandler(fileHandlerRoutes)"""
 
 # Exceptions will be written to my logging file
-def handle_exception(exc_type, exc_value, exc_traceback):
+"""def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
@@ -44,7 +39,9 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
 sys.excepthook = handle_exception
 
-
+"""
+logging.info("this is a test")
+print('asfsf')
 
 @app.route('/chart1')
 def chart1():
@@ -102,7 +99,10 @@ def payload_form():
 
 @app.route('/flight_request', methods=['GET', 'POST'])
 def flight_request():
-    logging.info('We are making a request for data for flights')
+    logging.info("""The flight_request template has been requeste
+    
+    
+    """)
     form = FlightRequestForm()
     if form.validate_on_submit():
         #Note: you have to sort out the passing of parameters into the functions
@@ -119,8 +119,9 @@ def flight_request():
         
         filtered_dict = {key: value for key, value in payload.items() if value != "" and value is not None}
         #print(filtered_dict)
-        logging.debug("""This is the dictionary for the data that was passed to the data_getter_OOP module:
-                      %(filtered_dict)""")
+        logging.debug("a POST request has been sent with the information for the payload for the data_getter_OOP module")
+        logging.debug(f"This is the dictionary passed: \n {filtered_dict}")
+        logging.debug(f"Compare to the dictoinary of the session: \n {session['payload']}")
         
 
 
@@ -159,32 +160,33 @@ def get_result():
                                 filter_data_bool=True, 
                                 payload = payload)
     small_dfs = big_dfs.create_small_df(method = 'quantile', quantile =0.14)
-    small_dfs.plot_polynomial_plotly(12)
+    no_parameters_polynomial = 12
+    small_dfs.plot_polynomial_plotly(no_parameters_polynomial)
 
     json_graph1 = small_dfs.return_json()
     #session['json_graph'] = json_graph1
     print('rendered graph')
+    logging.debug("""the data that was passed as a payload via the POST request allows data_getter_OOP 
+                        to fetch the data from KIWI API.""")
+    logging.debug("""A line of best fit is created with %(no_parameters_polynomial)d  paramaters""")
     return {"ok": True, "data":json_graph1}
 
 @app.route('/available_data', methods=['GET', 'POST'])
 def get_available_data():
+    logging.debug("The available_data template has been requested")
+    # This template does not support POST requests
     if request.method == 'POST':
-        
-
+        # Only data from 2 files can be shown and compared to each other, or data of a single file is shown
         metadata_for_graph = request.json
-        print(metadata_for_graph)
-        print("""
-        
-        
-        
-        
-        """)
+        logging.debug("A POST request has been made with the data needed that is wanted to be shown on the available_data webpage")
+        logging.debug("This is the graphs requested: %(metadata_for_graph)s")
         big_dfs = big_df(filename = metadata_for_graph['filename'], 
                                 filter_data_bool=True)
         small_dfs = big_dfs.create_small_df(method = 'quantile', quantile =0.14)
-        small_dfs.plot_polynomial_plotly(12)
-
+        no_parameters_polynomial = 12
+        small_dfs.plot_polynomial_plotly(no_parameters_polynomial)
         json_graph1 = small_dfs.return_json()
+        logging.debug("A graph has been drawn and the json data for the graph will be rendered on the html template with %(no_parameters_polynomial)d parameters for the polynomial shown")
         #session['json_graph'] = json_graph1
         return render_template('templates/get_available_data_back.html', json_graph = json_graph1)    
         #return redirect('/get_available_data')
@@ -219,6 +221,7 @@ def get_available_data():
         conn.rollback()
 
     # Converting this dates_checked list into a dictionary that is accessible by the primary key depart_dest of the databse
+    logging.debug("The files available in the SQL database are displayed on the available_data template")
     dates_checked = {}
     for row in dates_checked_list:
         row = list(row)
@@ -259,13 +262,8 @@ def get_available_data_back(date_id0, filename0, date_id1, filename1):
         'date_id1': date_id1,
         'filename1': filename1,
                           }
-    print(metadata_for_graph)
-    print("""
+    logger.debug("This is the metadata for the graph based on what the user requested on the available_data template: %(metadata_for_graph)s")
     
-    
-    
-    
-    """)
     big_dfs = big_df(filename = "D:\OneDrive\Coding\A-level\Airfare-flights KIWI API\Data\Parquet_files\\" + metadata_for_graph['filename'], 
                                 filter_data_bool=True)
     small_dfs = big_dfs.create_small_df(method = 'quantile', quantile =0.14)
