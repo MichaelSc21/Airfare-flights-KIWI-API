@@ -30,7 +30,7 @@ class Data_getter():
             self.oneway = False
             self.round = True
 
-        self.date_start = self.payload['fly_from']
+        self.date_start = self.payload['date_from']
         if self.round:
             self.date_end = self.payload['return_to']
         else:
@@ -152,16 +152,21 @@ class Data_getter():
             
 
 
-
+    # This function creates a list of all of the dates that are going to be set to the arguments: date_from & date_to (and return_from & return_to if flight_type == 'round')
     def return_dates(self, period, nights_in_dst):
         if self.date_start != None:
             self.payload['date_from'] = self.date_start
+            #self.date_end will only be set this way if the data is passed is coming from the flight_request endpoint
+            self.date_end = self.payload['date_to']
+            print(self.payload['date_from'])
             self.payload['date_to'] = pd.to_datetime(self.date_start
             ,format="%d/%m/%Y") + pd.Timedelta(days=period-1) 
             self.payload['date_to']=self.payload['date_to'].strftime('%d/%m/%Y')
+            print(self.payload['date_to'])
 
         if self.payload['flight_type'] == 'oneway':
             dates = [self.payload['date_from'], self.payload['date_to']]
+        # putting the dates in the format dd/mm/yyyy
         elif self.payload['flight_type'] == 'round':
             self.payload['return_from'] = pd.to_datetime(self.payload['date_from'] ,format="%d/%m/%Y") + pd.Timedelta(days=nights_in_dst)
             self.payload['return_from'] = self.payload['return_from'].strftime('%d/%m/%Y')
@@ -173,20 +178,24 @@ class Data_getter():
         print(self.payload)
         print(self.date_end)
         self.list_dates = []
-        date_end = pd.to_datetime(self.date_end,format="%d/%m/%Y")
-        print(date_end)
+        self.date_end = pd.to_datetime(self.date_end,format="%d/%m/%Y")
+        print(self.date_end)
         # Converts dates into pd.datetime
         for date in range(len(dates)):
             dates[date] = pd.to_datetime(dates[date],format="%d/%m/%Y")
 
         self.list_dates.append([date.strftime('%d/%m/%Y') for date in dates])
         # Loops over the dates until it gets to the date_end and adds them to self.list_dates in the format dd/mm/YYYY  # noqa: E501
+        print(type(dates[-1]))
+        print(dates)
+        print(type(self.date_end))
+        print(self.date_end)
         while dates[-1] < self.date_end:
             print(f"{dates[-1]} is smaller than {self.date_end}")
             for date in range(len(dates)):
                 dates[date] = dates[date] + pd.Timedelta(days = period)
             self.list_dates.append([date.strftime('%d/%m/%Y') for date in dates])
-
+        print(self.list_dates)
 
     # this function is going to be called by the thread pool, and then the write_data_in_chunks function
     def middle_man(self, date):
