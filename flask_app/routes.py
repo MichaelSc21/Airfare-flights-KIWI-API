@@ -31,15 +31,15 @@ fileHandlerRoutes.setLevel(logging.DEBUG)
 app.logger.addHandler(fileHandlerRoutes)"""
 
 # Exceptions will be written to my logging file
-"""def handle_exception(exc_type, exc_value, exc_traceback):
+def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
-    logger.critical('Uncaught exception', stack_info=True)
+    logging.critical('Uncaught exception', stack_info=True)
 
 sys.excepthook = handle_exception
 
-"""
+
 logging.info("this is a test")
 print('asfsf')
 
@@ -123,6 +123,7 @@ def flight_request():
         logging.debug(f"This is the dictionary passed: \n {filtered_dict}")
         logging.debug(f"Compare to the dictoinary of the session: \n {session['payload']}")
         
+        session['payload'] = filtered_dict
 
 
         return render_template('flight_request_data.html', )
@@ -154,7 +155,7 @@ def get_result():
                         delete_data = False,)
     getter.using_threads2(max_workers=2, 
                         period = 16, 
-                        nights_in_dst=7, 
+                        nights_in_dst=payload['nights_in_dst_to'], 
                         max = 1)
     big_dfs = big_df(filename = getter.filename, 
                                 filter_data_bool=True, 
