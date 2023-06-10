@@ -13,7 +13,8 @@ importlib.reload(API_details)
 import time
 import datetime
 
-
+# this class is modified to be able handle request from the flight_request endpoint
+# this class is not optimised to handle requests that require 1 API call but rather 2 or more
 class Data_getter():
     # remember to find a proper way to assingn appropriate values to date_start and date_end
     def __init__(self, 
@@ -152,34 +153,27 @@ class Data_getter():
             
 
 
-    # This function creates a list of all of the dates that are going to be set to the arguments: date_from & date_to (and return_from & return_to if flight_type == 'round')
+    
+    # This function creates a list of all of the dates that are going to be iterated through with the using_thread_2 function to the arguments: date_from & date_to (and return_from & return_to if flight_type == 'round')
+    # this function is optimised to only work with flight_requests for multiple API calls rather than a single one
+    # NOTE: I have still have to figure out how dates are going to be iterated through for round and oneway flights
     def return_dates(self, period, nights_in_dst):
         if self.date_start != None:
-            self.payload['date_from'] = self.date_start
-            #self.date_end will only be set this way if the data is passed is coming from the flight_request endpoint
-            self.date_end = self.payload['date_to']
-            print(self.payload['date_from'])
-            self.payload['date_to'] = pd.to_datetime(self.date_start
-            ,format="%d/%m/%Y") + pd.Timedelta(days=period-1) 
-            self.payload['date_to']=self.payload['date_to'].strftime('%d/%m/%Y')
-            print(self.payload['date_to'])
-
+            date_from = self.date_start
+            date_to = pd.to_datetime(self.date_start, format="%d/%m/%Y") + pd.Timedelta(days=period-1) 
         if self.payload['flight_type'] == 'oneway':
-            dates = [self.payload['date_from'], self.payload['date_to']]
+            dates = [date_from, date_to]
         # putting the dates in the format dd/mm/yyyy
         elif self.payload['flight_type'] == 'round':
-            self.payload['return_from'] = pd.to_datetime(self.payload['date_from'] ,format="%d/%m/%Y") + pd.Timedelta(days=nights_in_dst)
-            self.payload['return_from'] = self.payload['return_from'].strftime('%d/%m/%Y')
-            self.payload['return_to'] = pd.to_datetime(self.payload['date_to'] ,format="%d/%m/%Y") + pd.Timedelta(days=nights_in_dst)
-            self.payload['return_to'] = self.payload['return_to'].strftime('%d/%m/%Y')
+            return_from = pd.to_datetime(self.date_start ,format="%d/%m/%Y") + pd.Timedelta(days=nights_in_dst)
+            return_from = return_from.strftime('%d/%m/%Y')
+            return_to = pd.to_datetime(date_to ,format="%d/%m/%Y") + pd.Timedelta(days=nights_in_dst)
+            return_to = return_to.strftime('%d/%m/%Y')
 
-            dates = [self.payload['date_from'], self.payload['date_to'], self.payload['return_from'], self.payload['return_to']]
-        
-        print(self.payload)
-        print(self.date_end)
+            dates = [date_from, date_to, return_from, return_to]
+
         self.list_dates = []
         self.date_end = pd.to_datetime(self.date_end,format="%d/%m/%Y")
-        print(self.date_end)
         # Converts dates into pd.datetime
         for date in range(len(dates)):
             dates[date] = pd.to_datetime(dates[date],format="%d/%m/%Y")
@@ -196,6 +190,9 @@ class Data_getter():
                 dates[date] = dates[date] + pd.Timedelta(days = period)
             self.list_dates.append([date.strftime('%d/%m/%Y') for date in dates])
         print(self.list_dates)
+        # date_end is made into a string because it is needed when it is inserted into the database
+        # date_start doesn't need to be converted because it is already a string datatype
+        self.date_end = str(self.date_end)
 
     # this function is going to be called by the thread pool, and then the write_data_in_chunks function
     def middle_man(self, date):
@@ -243,12 +240,16 @@ class Data_getter():
         conn.close()
 
 
-    # this method is only to be for round flights as of 2/3/2023
+    # *NOTE: the variable nights_in_dst is only needed if the flight request is round
     def using_threads2(self, max_workers, date_start
     =None, date_end=None, period=16,nights_in_dst=None, max = 1):
+        if 'nights_in_dst_to' in self.payload.keys():
+            nights_in_dst = self.payload['nights_in_dst_to']
         self.return_dates(period=period, nights_in_dst=nights_in_dst)
+        
         count = 1
         #looping_over = int(len(self.list_dates)/max) + (len(self.list_dates)%max_workers>0)
+        
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             dateidx= 0
             #for i in range(looping_over):
@@ -277,8 +278,8 @@ class Data_getter():
                     count += 1
                     worker_list = []
                     worker_count =0
-
         self.insert_into_database()
+        
 
 
                 
