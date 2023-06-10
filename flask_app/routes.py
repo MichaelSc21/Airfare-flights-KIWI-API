@@ -155,7 +155,6 @@ def get_result():
                         delete_data = False,)
     getter.using_threads2(max_workers=2, 
                         period = 16, 
-                        nights_in_dst=payload['nights_in_dst_to'], 
                         max = 1)
     big_dfs = big_df(filename = getter.filename, 
                                 filter_data_bool=True, 
