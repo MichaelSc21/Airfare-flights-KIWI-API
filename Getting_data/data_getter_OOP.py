@@ -13,6 +13,9 @@ importlib.reload(API_details)
 import time
 import datetime
 
+
+#NOTE: Update the database to use a composite key of the date and the depart_dest fieldnames
+
 # this class is modified to be able handle request from the flight_request endpoint
 # this class is not optimised to handle requests that require 1 API call but rather 2 or more
 class Data_getter():
@@ -23,6 +26,7 @@ class Data_getter():
                  delete_data = False, 
                  date_start=None, 
                  date_end=None):  # noqa: E501
+
         self.payload = payload
         if payload['flight_type'] == 'oneway':
             self.oneway = True
@@ -63,23 +67,45 @@ class Data_getter():
         return response.text
     
     def get_departure_duration(self, row):
-        return row['departure'] / 3600
+        try:
+            return row['departure'] / 3600
+        except Exception as err:
+            print(err)
+            return 'N/A'
     
     def get_return_duration(self, row):
-        return row['return'] / 3600
+        try:
+            return row['return'] / 3600
+        except Exception as err:
+            print(err)
+            return 'N/A'
     
     def get_departure_date(self, row):
-        for i in row:
-            if i['flyTo'] == self.payload['fly_to']:
-                return i['utc_arrival']
+        try:
+            for i in row:
+                if i['flyTo'] == self.payload['fly_to']:
+                    return i['utc_arrival']
+        except Exception as err:
+            print(err)
+            return 'N/A'
 
     def get_return_date(self, row):
-        for i in row:
-            if i['flyTo'] == self.payload['fly_from']:
-                return i['utc_arrival']
+        try:
+            for i in row:
+                if i['flyTo'] == self.payload['fly_from']:
+                    return i['utc_arrival']
+        except Exception as err:
+            print(err)
+            return 'N/A'
+
     
     def get_availability(self, row):
-        return row['seats']
+        try:
+            return row['seats']
+        except Exception as err:
+            print(err)
+            return 'N/A'
+
 
     total_elem = 0
     def sanitise_data(self, data): 
@@ -103,7 +129,11 @@ class Data_getter():
                    'seats_available']
 
         df = pd.DataFrame.from_dict(data)
-        df['departure_duration'] = df['duration'].apply(lambda row: self.get_departure_duration(row))
+        try:
+            df['departure_duration'] = df['duration'].apply(lambda row: self.get_departure_duration(row))
+        except Exception as err:
+            print(err)
+            print(data)
         df['departure_date'] = df['route'].apply(lambda row: self.get_departure_date(row))
 
         if self.round == True:
@@ -192,7 +222,10 @@ class Data_getter():
         print(self.list_dates)
         # date_end is made into a string because it is needed when it is inserted into the database
         # date_start doesn't need to be converted because it is already a string datatype
-        self.date_end = str(self.date_end)
+        if self.payload['flight_type'] == 'oneway':
+            self.date_end = self.payload['date_to']
+        else:
+            self.date_end = self.payload['return_to']
 
     # this function is going to be called by the thread pool, and then the write_data_in_chunks function
     def middle_man(self, date):
