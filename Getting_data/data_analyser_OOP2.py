@@ -14,14 +14,16 @@ from datetime import date
 import sqlite3
 
 from importlib import reload
+
 import Getting_data.API_details as API_details
 #from Getting_data.data_getter_OOP import Data_getter
 reload(API_details)
 
 #%matplotlib qt
 
-class small_df():
+class small_df:
     # Specific filename can be passed in if needed
+    # big_df is created in the __init__
     def __init__(self, 
                  filename=None, 
                  payload = None, 
@@ -203,6 +205,7 @@ class small_df():
 
     
     # Plotting a graph with plotly rather than matplotlib since I want to create interactive graphs which can be shown on the internet. Matplotlib doesn't have that functionality
+    #this only plots the points
     def plot_graph_plotly(self):
         customdata = np.stack((self.df['seats_available']), axis=-1)
 
@@ -213,8 +216,10 @@ class small_df():
         fig = px.scatter(self.df, x=self.x, y=self.y)
         
         fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
-        fig.write_html(self.file_graph_plotly)
+        #fig.write_html(self.file_graph_plotly)
+        self.fig = fig
 
+    #this plots the points with a polynomial line of best fit
     def plot_polynomial_plotly(self, degree):
         customdata = np.stack((self.df['seats_available']), axis=-1)
         hovertemplate = ('Seats available: %{customdata}<br>' + 
@@ -309,7 +314,21 @@ class small_df():
     def return_json(self):
         #self.json_file_plotly_graph = json.dumps(self.fig, cls = plotly.utils.PlotlyJSONEncoder
         self.json_file_plotly_graph = self.fig.to_json()
+        print('this is the json graph that is going to be rendered on the website when the available_data endpoint is accessed')
+        print(self.json_file_plotly_graph)
         return self.json_file_plotly_graph
+    
+    def select_graph_type(self, graph_type=None, method = 'quantile', quantile = 0.2):
+        if graph_type == 'Plot graph':
+            self.create_small_df(method=method, quantile=quantile)
+            self.plot_graph_plotly()
+            return self.return_json()
+        elif graph_type == 'Plot graph with line of best fit':
+            self.create_small(method=method, quantile=quantile)
+            self.plot_polynomial_plotly()
+            return self.return_json()
+        
+        
 
 
 # %%

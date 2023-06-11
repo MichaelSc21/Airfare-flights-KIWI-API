@@ -11,6 +11,7 @@ import sqlite3
 import Getting_data.API_details as API_details
 import Getting_data.data_getter_OOP as data_getter_OOP
 import Getting_data.data_analyser_OOP as data_analyser_OOP
+import Getting_data.data_analyser_OOP2 as analyser
 
 Data_getter = data_getter_OOP.Data_getter
 big_df= data_analyser_OOP.big_df
@@ -96,7 +97,9 @@ def payload_form():
 #app.secret_key = API_details.FORMS_KEY  # Set your own secret key for Flask app
 #csrf = CSRFProtect(app)
 
-
+#NOTE: Update this endpoint so that when there is text in the return_to and return_from 
+# fieldnames, they are delted if the flight_type is "oneway" because it creates an 
+# error in the data_getter_OOP module
 @app.route('/flight_request', methods=['GET', 'POST'])
 def flight_request():
     logging.info("""The flight_request template has been requeste
@@ -254,22 +257,35 @@ def get_available_data():
 # As of thursday 11/5/2023, this format is going to be changed when I change the format of the database
 
 #@app.get('/get_available_data_back/date_id1=<path:date_id1>&filename1=<path:filename1>&date_id2=<path:date_id2>&filename2=<path:filename2>')
-@app.get('/get_available_data_back/date_id0=<date_id0>&filename0=<filename0>&date_id1=<date_id1>&filename1=<filename1>')
-def get_available_data_back(date_id0, filename0, date_id1, filename1):
+@app.get('/get_available_data_back/date_id0=<date_id0>&filename0=<filename0>&date_id1=<date_id1>&filename1=<filename1>&graph_type=<graph_type>')
+def get_available_data_back(date_id0, filename0, date_id1, filename1, graph_type):
     metadata_for_graph = {
         'date_id0': date_id0,
         'filename0': filename0,
         'date_id1': date_id1,
         'filename1': filename1,
                           }
-    logger.debug("This is the metadata for the graph based on what the user requested on the available_data template: %(metadata_for_graph)s")
+    logging.debug("This is the metadata for the graph based on what the user requested on the available_data template: %(metadata_for_graph)s")
+    print(f"date_id1 is: {date_id1}")
+    if date_id1 == 'NA':
+        logging.debug("Plotting a graph for a single file")
+        print("""
+        
+        asf
+        
+        
+        """)
+        print(graph_type)
+        df = analyser.small_df(filename = "D:\OneDrive\Coding\A-level\Airfare-flights KIWI API\Data\Parquet_files\\" + metadata_for_graph['filename0'], 
+                                filter_data_bool = True)
+        # the function select_graph type creates the dataframe for the graph and 
+        # creates a suitable graph based graph_type value and 
+        # then it returns a json dictionary that has the data for the graph to be rendered 
+        # on the webpage
+        json_graph1 = df.select_graph_type(method = 'quantile', quantile = 0.2, graph_type=graph_type)
+        
     
-    big_dfs = big_df(filename = "D:\OneDrive\Coding\A-level\Airfare-flights KIWI API\Data\Parquet_files\\" + metadata_for_graph['filename'], 
-                                filter_data_bool=True)
-    small_dfs = big_dfs.create_small_df(method = 'quantile', quantile =0.14)
-    small_dfs.plot_polynomial_plotly(12)
 
-    json_graph1 = small_dfs.return_json()
     print(json_graph1)
     return render_template('get_available_data_back.html', json_graph = json_graph1)
 
