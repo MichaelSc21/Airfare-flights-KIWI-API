@@ -31,9 +31,9 @@
                             <thead>
                                 <tr>
                                     <th>Time when checked</th>
-                                    <th>Date start of the file</th>
-                                    <th>Date end of the file</th>
-                                    <!-- Add more column headers here as needed -->
+                                    <th>Filename</th>
+                                    <th>Date start</th>
+                                    <th>Date end</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -41,8 +41,9 @@
                                 <tr class="{{row[0]}} {{row[1]}}">
                                     <td>{{ row[0] }}</td>
                                     <td>{{ row[1] }}</td>
+                                    <td>{{ row[2] }}</td>
                                     <td>{{ row[3] }}</td>
-                                    <!-- Add more column values here as needed -->
+                                    <script>console.log( {{ row[4] }} )</script>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -98,13 +99,20 @@
                         console.log(data)
                         // Send GET request to /show_data with extracted data
                         var csrf_token = document.getElementById("csrf_token").value;
-                        console.log('/get_available_data_back/date_id="'+date_id+'"&filename="' + filename + '"');
-                        window_location_string = '/get_available_data_back/date_id1='+date_id+'&filename1=' + filename + 'date_id2=&filename2=';
-                        window.location = '/get_available_data_back/date_id='+date_id+'&filename=' + filename;
+                        // leaving date_id1 and filename with no value apart from %02%03 will 
+                        // cause the application to not find the endpoint 
+                        // I am using NA instead as a value beacause the flask endpoint detects the 
+                        // value %02%03 as some type of special character
+                        // and also it makes it more obvious that date_id1 and filename1 are supposed to not have a value
+                        window_location_string = '/get_available_data_back/date_id0='+date_id+'&filename0=' + filename + '&date_id1=NA&filename1=NA&graph_type=' + buttonText;
+                        window.location = window_location_string
                         
                     }
+                    else if (selectedRows.length === 0) {
+                        alert('You need to select a file')
+                    }
                     else {
-                        alert('You can only select 1 file for this function')
+                        alert('You cannot select more than 1 file for this function')
                     }
                     
                 } else if (buttonText == "Compare data from 2 files") {
@@ -132,9 +140,13 @@
                         console.log(data)
                         // gets rid of the "&" character that is added at the end of the string
                         window_location_string = window_location_string.slice(0, -1) 
-                        window.location = window_location_string
+                        window_location_string += '&graph_type=' + buttonText
+                        window.location = window_location_string 
                         console.log(window_location_string)
                         
+                    }
+                    else {
+                        alert('You need to select 2 files for this function')
                     }
                 }
             });
