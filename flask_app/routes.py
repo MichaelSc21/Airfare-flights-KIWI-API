@@ -241,6 +241,11 @@ def get_available_data():
         else:
             dates_checked[depart_dest_column] = []
             dates_checked[depart_dest_column].append(row)
+    print("""
+    
+    
+    
+    """)
     print(dates_checked)
     # after departure and destinations are shown;
     # you can click on one of them which will load a table via JS
@@ -282,8 +287,21 @@ def get_available_data_back(date_id0, filename0, date_id1, filename1, graph_type
         # creates a suitable graph based graph_type value and 
         # then it returns a json dictionary that has the data for the graph to be rendered 
         # on the webpage
-        json_graph1 = df.select_graph_type(method = 'quantile', quantile = 0.2, graph_type=graph_type)
-        
+        json_graph1 = df.select_graph_type(method = 'quantile', 
+                                           quantile = 0.2, 
+                                           graph_type=graph_type, 
+                                           degree=12)
+    else:
+        df = analyser.small_df(filename = "D:\OneDrive\Coding\A-level\Airfare-flights KIWI API\Data\Parquet_files\\" + metadata_for_graph['filename0'], 
+                                filter_data_bool = True)
+        json_graph1 = df.select_graph_type(method = 'quantile', 
+                                           quantile = 0.2, 
+                                           graph_type=graph_type, 
+                                           degree=12, 
+                                           other_date_df_filename=filename1)
+
+          
+    
     
 
     print(json_graph1)
