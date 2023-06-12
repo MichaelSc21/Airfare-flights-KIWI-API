@@ -65,6 +65,7 @@ class small_df:
     # We create a small df which we can visualise better on a graph
     def create_small_df(self, method=None, quantile=None):
         self.method = method
+        print(self.method)
         self.quantile = quantile
         self.df = pd.DataFrame(columns=['departure_date', 'price', 'seats_available'])
         unique_dates = self.big_df['departure_date'].unique()
@@ -259,8 +260,8 @@ class small_df:
         # we create an instance of another small_df class, and we use it to get the small df
         # this is used to compare against the small_df form the instance it is created from
 
-
-
+    # As of 12/6/2023
+    # I have to sort out this function
     def compare_data_small_df_plotly(self, other_date_df_filename=None):
         self.other_date_df_filename = other_date_df_filename
         if self.other_date_df_filename == None:
@@ -272,8 +273,11 @@ class small_df:
         self.other_date_df = self.other_date_df.df
         #self.json_df = pd.read_json(orient='split', path_or_buf=self.small_df_filename)
         #mask = self.big_df['date_added'] == pd.to_datetime(date, format="%d/%m/%Y")
+        print(f'Length of the self.df {len(self.df)}')
+        print(f'Length of the self.df {len(self.other_date_df)}')
 
         price_change_mask = self.df['price'] - self.other_date_df['price']
+        print(f'length of their difference: {price_change_mask}')
 
         colour_series =[]
         price_change_text = []
@@ -318,14 +322,23 @@ class small_df:
         print(self.json_file_plotly_graph)
         return self.json_file_plotly_graph
     
-    def select_graph_type(self, graph_type=None, method = 'quantile', quantile = 0.2):
+    def select_graph_type(self, 
+                          graph_type=None, 
+                          method = 'quantile', 
+                          quantile = 0.2, 
+                          degree=None,
+                          other_date_df_filename=None):
         if graph_type == 'Plot graph':
             self.create_small_df(method=method, quantile=quantile)
             self.plot_graph_plotly()
             return self.return_json()
         elif graph_type == 'Plot graph with line of best fit':
-            self.create_small(method=method, quantile=quantile)
-            self.plot_polynomial_plotly()
+            self.create_small_df(method=method, quantile=quantile)
+            self.plot_polynomial_plotly(degree=degree)
+            return self.return_json()
+        elif graph_type == 'Compare data from 2 files':
+            self.create_small_df(method=method, quantile=quantile)
+            self.compare_data_small_df_plotly(other_date_df_filename=other_date_df_filename)
             return self.return_json()
         
         
