@@ -260,8 +260,7 @@ class small_df:
         # we create an instance of another small_df class, and we use it to get the small df
         # this is used to compare against the small_df form the instance it is created from
 
-    # As of 12/6/2023
-    # I have to sort out this function
+
     def compare_data_small_df_plotly(self, other_date_df_filename=None):
         self.other_date_df_filename = other_date_df_filename
         if self.other_date_df_filename == None:
@@ -271,46 +270,67 @@ class small_df:
 
         self.other_date_df.create_small_df(method = self.method, quantile = self.quantile)
         self.other_date_df = self.other_date_df.df
-        #self.json_df = pd.read_json(orient='split', path_or_buf=self.small_df_filename)
-        #mask = self.big_df['date_added'] == pd.to_datetime(date, format="%d/%m/%Y")
-        print(f'Length of the self.df {len(self.df)}')
-        print(f'Length of the self.df {len(self.other_date_df)}')
 
-        price_change_mask = self.df['price'] - self.other_date_df['price']
-        print(f'length of their difference: {price_change_mask}')
+        # subtracting one df from the other
+        def subtraction(row):
+            index = row.name
+            if row['matching_index']:
+                return self.df.loc[index]['price'] - self.other_date_df.loc[index]['price']
+            else:
+                if index in self.df.index:
+                    return self.df.loc[index]['price']
+                elif index in self.other_date_df.index:
+                    return self.other_date_df.loc[index]['price']
+                else:
+                    print(' There is some missing data')
 
-        colour_series =[]
-        price_change_text = []
+        # adding a colours for the data points on the scatter plot
+        def adding_colours(row):
+            if row['matching_index']:
+                if row['price'] == 0 :
+                    price_change_text.append('No price change')
+                    return 'blue'
+                elif row['price']> 0: 
+                    #Price is higher now compared to the last time it was checked
+                    price_change_text.append('Price increased by £'+ str(row['price']))
+                    return 'red'
+                    
+                elif row['price'] < 0:
+                    #Price is lower now compared to the last time it was checked
+                    x = -row['price']
+                    price_change_text.append('Price decreased by £'+ str(x))    
+                    return 'green'
+                    
+            # If the indices don't match, this will happen
+            else:
+                price_change_text.append('Data unavailable')
+                return 'grey'
+           
+        price_change_text=[]
 
-        for i in price_change_mask:
-            # Nothing will be added to the grpah if the data is unavailable
-            if i == 0 or i == np.nan:
-                colour_series.append('blue')
-                price_change_text.append('No price change')
-            elif i> 0: 
-                #Price is higher now compared to the last time it was checked
-                colour_series.append('red')
-                price_change_text.append('Price increased by £'+ str(i))
-            elif i < 0:
-                #Price is lower now compared to the last time it was checked
-                i = -i
+        # Creating a df that has a union for the indices of the 2 dfs
+        indices = self.df.index.union(self.other_date_df.index)
+        self.calc_df = pd.DataFrame(index=indices)
+        self.calc_df['matching_index'] = self.calc_df.index.isin(self.df.index) & self.calc_df.index.isin(self.other_date_df.index)
+    
+        
+        self.calc_df['price'] = self.calc_df.apply(lambda row: subtraction(row), axis=1)
+        self.calc_df['colour'] = self.calc_df.apply(lambda row: adding_colours(row), axis=1)
 
-                colour_series.append('green')
-                price_change_text.append('Price decreased by £'+ str(i))
 
-        customdata = np.stack((self.df['seats_available'], price_change_text), axis=-1)
-        hovertemplate = ('Seats available: %{customdata[0]}<br>' + 
-            '%{customdata[1]}<br>' + 
+        customdata = np.stack((price_change_text), axis=-1)
+        hovertemplate = (#'Seats available: %{customdata[0]}<br>' + 
+            '%{customdata}<br>' + 
             'price: %{y} <br>' + 
             'date: %{x}' + 
             '<extra></extra>')
-        trace1 = go.Scatter(x=self.x, y=self.y, mode='markers',name='line')
+        trace1 = go.Scatter(x=self.calc_df.index, y=self.calc_df['price'], mode='markers',name='line')
         data = [trace1]
-        layout = go.Layout(title=f"Flights {self.payload['flight_type']} from {self.payload['fly_from']} to {self.payload['fly_to']} for {self.payload['adults']} adults")
+        #layout = go.Layout(title=f"Flights {self.payload['flight_type']} from {self.payload['fly_from']} to {self.payload['fly_to']} for {self.payload['adults']} adults")
 
-        fig = go.Figure(data = data, layout=layout)
+        fig = go.Figure(data = data)
         fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
-        fig.update_traces(marker=dict(color=colour_series))
+        fig.update_traces(marker=dict(color=self.calc_df['colour']))
         fig.write_html(self.file_graph_plotly)
         self.fig = fig
 
@@ -319,7 +339,6 @@ class small_df:
         #self.json_file_plotly_graph = json.dumps(self.fig, cls = plotly.utils.PlotlyJSONEncoder
         self.json_file_plotly_graph = self.fig.to_json()
         print('this is the json graph that is going to be rendered on the website when the available_data endpoint is accessed')
-        print(self.json_file_plotly_graph)
         return self.json_file_plotly_graph
     
     def select_graph_type(self, 
