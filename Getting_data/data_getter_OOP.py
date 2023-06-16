@@ -250,15 +250,17 @@ class Data_getter():
     def insert_into_database(self):
         conn = sqlite3.connect('Data/Departure and destination.db')
         self.time_when_added = str(datetime.datetime.now().strftime('%d/%m/%Y %H:00'))
+        self.time_when_added = str(self.time_when_added)
         try:
             conn.execute('''
-                INSERT OR IGNORE INTO date_checked(date, depart_dest, filename, start_date, end_date)
-                VALUES(?, ?, ?, ?, ?)
+                INSERT OR IGNORE INTO date_checked(date, depart_dest, filename, start_date, end_date, JSON_payload)
+                VALUES(?, ?, ?, ?, ?, ?)
             ''', (self.time_when_added, 
                 f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}",
                 self.filename,
                 self.date_start,
-                self.date_end))
+                self.date_end,
+                json.dumps(self.payload)))
             print('got to here')
             depart_dest = f"""{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}"""
             conn.execute('''
@@ -271,7 +273,6 @@ class Data_getter():
             
         conn.commit()
         conn.close()
-
 
     # *NOTE: the variable nights_in_dst is only needed if the flight request is round
     def using_threads2(self, max_workers, date_start
