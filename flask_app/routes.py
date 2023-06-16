@@ -274,15 +274,9 @@ def get_available_data_back(date_id0, filename0, date_id1, filename1, graph_type
     print(f"date_id1 is: {date_id1}")
     if date_id1 == 'NA':
         logging.debug("Plotting a graph for a single file")
-        print("""
-        
-        asf
-        
-        
-        """)
-        print(graph_type)
         df = analyser.small_df(filename = "D:\OneDrive\Coding\A-level\Airfare-flights KIWI API\Data\Parquet_files\\" + metadata_for_graph['filename0'], 
-                                filter_data_bool = True)
+                                filter_data_bool = True,
+                                date_id=metadata_for_graph['date_id0'])
         # the function select_graph type creates the dataframe for the graph and 
         # creates a suitable graph based graph_type value and 
         # then it returns a json dictionary that has the data for the graph to be rendered 
@@ -293,12 +287,14 @@ def get_available_data_back(date_id0, filename0, date_id1, filename1, graph_type
                                            degree=12)
     else:
         df = analyser.small_df(filename = "D:\OneDrive\Coding\A-level\Airfare-flights KIWI API\Data\Parquet_files\\" + metadata_for_graph['filename0'], 
-                                filter_data_bool = True)
+                                filter_data_bool = True,
+                                date_id=metadata_for_graph['date_id0'])
         json_graph1 = df.select_graph_type(method = 'quantile', 
                                            quantile = 0.2, 
                                            graph_type=graph_type, 
                                            degree=12, 
-                                           other_date_df_filename=filename1)
+                                           other_date_df_filename=filename1,
+                                           other_date_id=metadata_for_graph['date_id1'])
 
           
     
