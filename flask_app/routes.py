@@ -293,8 +293,8 @@ def get_available_data_back(date_id0, filename0, date_id1, filename1, graph_type
                                            quantile = 0.2, 
                                            graph_type=graph_type, 
                                            degree=12, 
-                                           other_date_df_filename=filename1,
-                                           other_date_id=metadata_for_graph['date_id1'])
+                                           other_date_df_filename=metadata_for_graph['filename1'],
+                                           other_date_df_id=metadata_for_graph['date_id1'])
 
           
     
