@@ -217,12 +217,16 @@ class small_df:
             'price: %{y} <br>' + 
             'date: %{x}' + 
             '<extra></extra>')
-        fig = px.scatter(self.df, x=self.x, y=self.y)
+        fig = px.scatter(self.df, x=self.x, y=self.y,
+                         title = f"Flights {self.payload['flight_type']} from {self.payload['fly_from']} to {self.payload['fly_to']} for {self.payload['adults']} adults")
 
-        trace1 = go.Scatter(x=self.calc_df.index, y=self.calc_df['price'], mode='markers',name='line')
-        layout = go.Layout(title=f"Flights {self.payload['flight_type']} from {self.payload['fly_from']} to {self.payload['fly_to']} for {self.payload['adults']} adults")
-
-        fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
+        layout = go.Layout(title=f"Flights {self.payload['flight_type']} from {self.payload['fly_from']} to {self.payload['fly_to']} for {self.payload['adults']} adults",
+                           yaxis_title=f"Price in {self.payload['curr']}", 
+                           xaxis_title='Date',
+                           showlegend=False)
+        fig.update_layout(layout) 
+        fig.update_traces(customdata=customdata, hovertemplate=hovertemplate,)
+        
         #fig.write_html(self.file_graph_plotly)
         self.fig = fig
 
@@ -237,44 +241,50 @@ class small_df:
         p= np.polyfit(self.x_line, self.y, degree)
         self.y_line = np.polyval(p,self.x_line)
 
-        trace1 = go.Scatter(x=self.x, y=self.y, mode='markers', name='line')
-        trace2 = go.Scatter(x=self.x, y=self.y_line, mode='lines', name='scatter')
+        trace1 = go.Scatter(x=self.x, y=self.y, mode='markers')
+        trace2 = go.Scatter(x=self.x, y=self.y_line, mode='lines')
         data = [trace1, trace2]
-        layout = go.Layout(title='Flights oneway from OPO to BHX for 4 adults ')
 
-        fig = go.Figure(data = data, layout=layout)
-
-        fig.update_traces(customdata=customdata, hovertemplate=hovertemplate, layout=layout)
-        fig.write_html(self.file_graph_plotly)
+        layout = go.Layout(title=f"Flights {self.payload['flight_type']} from {self.payload['fly_from']} to {self.payload['fly_to']} for {self.payload['adults']} adults",
+                           yaxis_title=f"Price in {self.payload['curr']}", 
+                           xaxis_title='Date',
+                           showlegend=False)
+        
+        fig = go.Figure(data = data)
+        fig.update_layout(layout)
+        fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
+        #fig.write_html(self.file_graph_plotly)
         self.fig = fig
 
-    def fetch_from_database(self, date_when_checked, filename):
+    def fetch_from_database(self, date_id, filename):
         # changing the format of the date_id from the one which was suitable as a classname
         # in the HTML template to one which can be used for quering the database
-        self.date_id = self.date_id.replace('_', ' ')
-        self.date_id = self.date_id.replace('-', '/')
-        print(self.date_id)
-        filename = filename.replace('\\', '\\\\')
-        
-        print(filename)
+        date_id = date_id.replace('_', ' ')
+        date_id = date_id.replace('-', '/')
+
+        print(f"""We are fetching records that have the
+              date_id:{date_id};
+              filename:{filename}""")
+
         try:
             conn = sqlite3.connect('Data/Departure and destination.db')
             cursor = conn.cursor()
             cursor.execute("""
             SELECT *
             FROM date_checked
-            WHERE date LIKE ? AND filename LIKE ?
-            """, (date_when_checked,
-                  filename))
+            WHERE date LIKE ? AND filename LIKE ? 
+            """, (date_id, filename,))
             
             rows = cursor.fetchall()
+            rows= rows[0]
             print(rows)
+            print(len(rows))
             return_dict={'date':rows[0],
                          'depart_dest':rows[1],
                          'filename':rows[2],
                          'start_date':rows[3],
                          'end_date':rows[4],
-                         'payload': json.lrows[5]}
+                         'payload': rows[5]}
         except Exception as err:
             print(err)
             conn.rollback()
@@ -285,12 +295,16 @@ class small_df:
         # this is used to compare against the small_df form the instance it is created from
         return return_dict
 
-    def compare_data_small_df_plotly(self, other_date_df_filename=None, other_payload=None):
-        self.other_date_df_filename = other_date_df_filename
+    def compare_data_small_df_plotly(self, other_date_df_filename=None, 
+                                     other_date_df_payload=None,):
         if self.other_date_df_filename == None:
             self.other_date_df = small_df(filename = other_date_df_filename, filter_data_bool = True)
         else:
+            self.other_date_df_filename = other_date_df_filename
             self.other_date_df = small_df(filename = self.other_date_df_filename, filter_data_bool = True)
+
+        if other_date_df_payload == None:
+            self.other_date_df_payload = other_date_df_payload
 
         self.other_date_df.create_small_df(method = self.method, quantile = self.quantile)
         self.other_date_df = self.other_date_df.df
@@ -350,11 +364,12 @@ class small_df:
             '<extra></extra>')
         trace1 = go.Scatter(x=self.calc_df.index, y=self.calc_df['price'], mode='markers',name='line')
         data = [trace1]
-        layout = go.Layout(title=f"Flights {self.payload['flight_type']} from {self.payload['fly_from']} to {self.payload['fly_to']} for {self.payload['adults']} adults")
+        layout = go.Layout(title=f"Flights {self.payload['flight_type']} from {self.payload['fly_from']} to {self.payload['fly_to']} for {self.payload['adults']} adults<br>minus Flights {other_date_df_payload['flight_type']} from {other_date_df_payload['fly_from']} to {other_date_df_payload['fly_to']} for {other_date_df_payload['adults']} adults")
 
         fig = go.Figure(data = data)
         fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
-        fig.update_traces(marker=dict(color=self.calc_df['colour']), layout=layout)
+        fig.update_layout(layout)
+        fig.update_traces(marker=dict(color=self.calc_df['colour']))
         fig.write_html(self.file_graph_plotly)
         self.fig = fig
 
@@ -370,10 +385,14 @@ class small_df:
                           method = 'quantile', 
                           quantile = 0.2, 
                           degree=None,
-                          other_date_df_filename=None):
-        return_dict = self.fetch_from_database(self.date_id, self.filename)
-        self.payload = json.loads(return_dict['payload'])
-        self.payload = return_dict['payload']
+                          other_date_df_filename=None,
+                          other_date_df_id=None):
+        SQL_query_dict = self.fetch_from_database(self.date_id, self.filename)
+        self.payload = json.loads(SQL_query_dict['payload'])
+
+        self.other_date_df_id = other_date_df_id
+        self.other_date_df_filename = "D:\OneDrive\Coding\A-level\Airfare-flights KIWI API\Data\Parquet_files\\" + other_date_df_filename
+
         if graph_type == 'Plot graph':
             self.create_small_df(method=method, quantile=quantile)
             self.plot_graph_plotly()
@@ -384,8 +403,11 @@ class small_df:
             return self.return_json()
         elif graph_type == 'Compare data from 2 files':
             self.create_small_df(method=method, quantile=quantile)
-
-            self.compare_data_small_df_plotly(other_date_df_filename=other_date_df_filename)
+            SQL_query_dict_other_date_df = self.fetch_from_database(self.other_date_df_id, self.other_date_df_filename)
+            self.other_date_df_payload = json.loads(SQL_query_dict_other_date_df['payload'])
+            self.other_date_df_filename =   SQL_query_dict_other_date_df['filename']
+            self.compare_data_small_df_plotly(other_date_df_filename=other_date_df_filename,
+                                              other_date_df_payload=self.other_date_df_payload)
             return self.return_json()
         
         
