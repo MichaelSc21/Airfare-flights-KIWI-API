@@ -42,20 +42,22 @@ class Data_getter():
             self.date_end = self.payload['date_to']
         #self.date_start= date_start
         #self.date_end = date_end
+
         # The time when it is added is in the format dd/mm/yy HH:00
         # When converted so that it is added to the filepath, it will be: dd_mm_yy HH_00
         self.time_when_added = str(datetime.datetime.now().strftime('%d/%m/%Y %H:00'))
-        self.time_when_added_filepath = self.time_when_added.replace(':', '_').replace('/', '_')
-
-
+        self.time_when_added_filepath = self.time_when_added.replace(':', '_').replace('/', '-')
+        
         self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}_{str(self.date_start).replace('/',  '-')}_to_{str(self.date_end).replace('/',  '-')}.parquet"
         self.absolute_path = os.path.join(sys.path[0],
                                         API_details.DIR_DATA_PARQUET,
                                         self.time_when_added_filepath)
         self.absolute_path_with_filename = os.path.join(self.absolute_path, self.filename)
         self.sanitise = sanitise_data
-        self.delete_data = delete_data
 
+        # If the filepath for that certain time is not existent, it will be created
+        # It fhe filepath exists, however if the same file is changed at the same hour,
+        # it will be updated with the newer data rather than have the old data
         if not os.path.exists(self.absolute_path):
             os.makedirs(self.absolute_path)
         else:

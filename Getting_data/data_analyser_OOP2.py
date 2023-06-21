@@ -30,7 +30,9 @@ class small_df:
                  filter_data_bool = False,  
                  date_start = None, 
                  date_end = None,
-                 date_id = None): 
+                 date_id = None,
+                 absolute_path_with_filename=None,
+                 other_df_instance = False): 
         self.payload = payload
         self.date_start = date_start
         self.date_end = date_end
@@ -39,15 +41,33 @@ class small_df:
             #self.filename = os.path.join(sys.path[0],API_details.DIR_DATA_PARQUET, self.filename)
         else:
             self.filename = filename
-        self.filename = os.path.join(sys.path[0],API_details.DIR_DATA_PARQUET, self.filename)
-
-        self.big_df = pd.read_parquet(self.filename)
-        
+        #self.filename = os.path.join(sys.path[0],API_details.DIR_DATA_PARQUET, self.filename)
+  
         self.date_id = date_id
+        if absolute_path_with_filename == None:
+            self.absolute_path_with_filename = self.create_absolute_path_with_filename(self.date_id, self.filename)
+            
+            print(self.absolute_path_with_filename)
+            print(len(self.absolute_path_with_filename))
+            print("\n\n\n\n\n")
+        else:
+            self.absolute_path_with_filename = absolute_path_with_filename
+        self.big_df = pd.read_parquet(self.absolute_path_with_filename)
 
         if filter_data_bool == True:
             self.filter_data()
     
+    def create_absolute_path_with_filename(self, date_when_checked, filename):
+        self.time_when_added_filepath = date_when_checked.replace('_', ' ').replace(':', '_').replace('/', '_')
+        print(self.time_when_added_filepath)
+        absolute_path_with_filename = os.path.join(sys.path[0],
+                                                        API_details.DIR_DATA_PARQUET,
+                                                        self.time_when_added_filepath,
+                                                        filename)
+        return absolute_path_with_filename
+
+
+
     #Big_df is filtered and we get rid of any data outside of 2 standard deviations
     def filter_data(self):    
         mean = self.big_df['price'].mean()
@@ -297,14 +317,12 @@ class small_df:
 
     def compare_data_small_df_plotly(self, other_date_df_filename=None, 
                                      other_date_df_payload=None,):
-        if self.other_date_df_filename == None:
-            self.other_date_df = small_df(filename = other_date_df_filename, filter_data_bool = True)
-        else:
-            self.other_date_df_filename = other_date_df_filename
-            self.other_date_df = small_df(filename = self.other_date_df_filename, filter_data_bool = True)
 
-        if other_date_df_payload == None:
-            self.other_date_df_payload = other_date_df_payload
+        self.other_date_df_filename = other_date_df_filename
+        self.other_date_df = small_df(absolute_path_with_filename=self.other_date_df_absolute_path_with_filename, 
+                                        filter_data_bool=True,
+                                        payload=self.other_date_df_payload)
+
 
         self.other_date_df.create_small_df(method = self.method, quantile = self.quantile)
         self.other_date_df = self.other_date_df.df
@@ -364,13 +382,16 @@ class small_df:
             '<extra></extra>')
         trace1 = go.Scatter(x=self.calc_df.index, y=self.calc_df['price'], mode='markers',name='line')
         data = [trace1]
-        layout = go.Layout(title=f"Flights {self.payload['flight_type']} from {self.payload['fly_from']} to {self.payload['fly_to']} for {self.payload['adults']} adults<br>minus Flights {other_date_df_payload['flight_type']} from {other_date_df_payload['fly_from']} to {other_date_df_payload['fly_to']} for {other_date_df_payload['adults']} adults")
+        layout = go.Layout(title=f"Flights {self.payload['flight_type']} from {self.payload['fly_from']} to {self.payload['fly_to']} for {self.payload['adults']} adults<br>minus Flights {other_date_df_payload['flight_type']} from {other_date_df_payload['fly_from']} to {other_date_df_payload['fly_to']} for {other_date_df_payload['adults']} adults",
+                           yaxis_title=f"Price in {self.payload['curr']}", 
+                           xaxis_title='Date',
+                           showlegend=False     )
 
         fig = go.Figure(data = data)
         fig.update_traces(customdata=customdata, hovertemplate=hovertemplate)
         fig.update_layout(layout)
         fig.update_traces(marker=dict(color=self.calc_df['colour']))
-        fig.write_html(self.file_graph_plotly)
+        #fig.write_html(self.file_graph_plotly)
         self.fig = fig
 
 
@@ -391,7 +412,7 @@ class small_df:
         self.payload = json.loads(SQL_query_dict['payload'])
 
         self.other_date_df_id = other_date_df_id
-        self.other_date_df_filename = "D:\OneDrive\Coding\A-level\Airfare-flights KIWI API\Data\Parquet_files\\" + other_date_df_filename
+        self.other_date_df_filename = other_date_df_filename
 
         if graph_type == 'Plot graph':
             self.create_small_df(method=method, quantile=quantile)
@@ -406,7 +427,15 @@ class small_df:
             SQL_query_dict_other_date_df = self.fetch_from_database(self.other_date_df_id, self.other_date_df_filename)
             self.other_date_df_payload = json.loads(SQL_query_dict_other_date_df['payload'])
             self.other_date_df_filename =   SQL_query_dict_other_date_df['filename']
-            self.compare_data_small_df_plotly(other_date_df_filename=other_date_df_filename,
+
+            self.other_date_df_absolute_path_with_filename = self.create_absolute_path_with_filename(self.other_date_df_id, self.other_date_df_filename)
+            
+            print(f"Absolute file path: {self.absolute_path_with_filename}")
+            print(f"Absolute file path for other df: {self.other_date_df_absolute_path_with_filename}")
+            
+            # Arguments don't need to be passed as they are already variable that belong to the instance
+            # however, it shows the variables this function needs
+            self.compare_data_small_df_plotly(other_date_df_filename=self.other_date_df_absolute_path_with_filename,
                                               other_date_df_payload=self.other_date_df_payload)
             return self.return_json()
         
