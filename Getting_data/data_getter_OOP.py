@@ -42,14 +42,28 @@ class Data_getter():
             self.date_end = self.payload['date_to']
         #self.date_start= date_start
         #self.date_end = date_end
-        
+        # The time when it is added is in the format dd/mm/yy HH:00
+        # When converted so that it is added to the filepath, it will be: dd_mm_yy HH_00
+        self.time_when_added = str(datetime.datetime.now().strftime('%d/%m/%Y %H:00'))
+        self.time_when_added_filepath = self.time_when_added.replace(':', '_').replace('/', '_')
+
+
         self.filename = f"{self.payload['fly_from']}_to_{self.payload['fly_to']}_{self.payload['flight_type']}_{str(self.date_start).replace('/',  '-')}_to_{str(self.date_end).replace('/',  '-')}.parquet"
-        self.filename = os.path.join(sys.path[0],API_details.DIR_DATA_PARQUET, self.filename)
+        self.absolute_path = os.path.join(sys.path[0],
+                                        API_details.DIR_DATA_PARQUET,
+                                        self.time_when_added_filepath)
+        self.absolute_path_with_filename = os.path.join(self.absolute_path, self.filename)
         self.sanitise = sanitise_data
         self.delete_data = delete_data
-        if self.delete_data:
-            self.write_data("o")
+
+        if not os.path.exists(self.absolute_path):
+            os.makedirs(self.absolute_path)
+        else:
+            if os.path.exists(self.absolute_path_with_filename):
+                os.remove(self.absolute_path_with_filename)
+
         
+
 
     def get_data(self):
         url  = "https://api.tequila.kiwi.com/v2/search?"
@@ -154,32 +168,31 @@ class Data_getter():
         #json_string = df.to_json(orient='records')
         return df
     
+    # this way of writing to the file is deprecated
     def write_data(self, data):
         if data == "o":
-            with open(self.filename, 'w') as f:
+            with open(self.absolute_path_with_filename, 'w') as f:
                 pass
         else:
             data= json.loads(data)
             #data = data['data']
-            with open(self.filename, 'w') as f:
+            with open(self.absolute_path_with_filename, 'w') as f:
                 json.dump(data, f, indent=2)
 
     # writes the data to a file in chunks; It converts the existing data in the file to 
     # dataframe then concactenates the month_df and the file_df together
     def write_data_in_chunks(self, month_df):
         try: 
-            file_df = pd.read_parquet(self.filename)
-
+            file_df = pd.read_parquet(self.absolute_path_with_filename)
         except Exception as err: 
             print(err)
-
 
         try:
             file_df = pd.concat([file_df,month_df])
         except Exception as err:
             print(err)
             file_df = month_df
-        file_df.to_parquet(self.filename)
+        file_df.to_parquet(self.absolute_path_with_filename)
             
 
 
@@ -248,10 +261,9 @@ class Data_getter():
         return temp_dict
 
     def insert_into_database(self):
-        conn = sqlite3.connect('Data/Departure and destination.db')
-        self.time_when_added = str(datetime.datetime.now().strftime('%d/%m/%Y %H:00'))
-        self.time_when_added = str(self.time_when_added)
+        
         try:
+            conn = sqlite3.connect('Data/Departure and destination.db')
             conn.execute('''
                 INSERT OR IGNORE INTO date_checked(date, depart_dest, filename, start_date, end_date, JSON_payload)
                 VALUES(?, ?, ?, ?, ?, ?)
@@ -270,7 +282,7 @@ class Data_getter():
         except Exception as err:
             print(err)
             conn.rollback()
-            
+            raise "There was a problem when connecting ot the database with the data_getter_OOP"
         conn.commit()
         conn.close()
 
