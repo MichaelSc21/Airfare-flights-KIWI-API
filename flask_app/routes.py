@@ -159,14 +159,15 @@ def get_result():
     getter.using_threads2(max_workers=2, 
                         period = 16, 
                         max = 1)
-    big_dfs = big_df(filename = getter.filename, 
-                                filter_data_bool=True, 
-                                payload = payload)
-    small_dfs = big_dfs.create_small_df(method = 'quantile', quantile =0.14)
+    df = analyser.small_df(filename = getter.filename,
+                    absolute_path_with_filename=getter.absolute_path_with_filename,
+                    filter_data_bool=True, 
+                    payload = payload)
+    df.create_small_df(method = 'quantile', quantile =0.14)
     no_parameters_polynomial = 12
-    small_dfs.plot_polynomial_plotly(no_parameters_polynomial)
+    df.plot_polynomial_plotly(no_parameters_polynomial)
 
-    json_graph1 = small_dfs.return_json()
+    json_graph1 = df.return_json()
     #session['json_graph'] = json_graph1
     print('rendered graph')
     logging.debug("""the data that was passed as a payload via the POST request allows data_getter_OOP 
@@ -223,16 +224,20 @@ def get_available_data():
         print(err)
         conn.rollback()
 
-    # Converting this dates_checked list into a dictionary that is accessible by the primary key depart_dest of the databse
+    # Converting this dates_checked list into a dictionary that is accessible by the 
+    # primary key depart_dest of the databse
+    #  Each row after this for loop will be like this: 
+    # ['21-06-2023 18:00', 'LTN_to_IAS_oneway_01-07-2023_to_31-07-2023.parquet', '01/07/2023', '31/07/2023']
     logging.debug("The files available in the SQL database are displayed on the available_data template")
     dates_checked = {}
     for row in dates_checked_list:
         row = list(row)
         depart_dest_column = row.pop(1)
         #Only showing the filename and not the whole path
-        index = row[1].find('Parquet_files\\')
-        row[1] = row[1][index + len('Parquet_files\\'):]
+        #index = row[1].find('Parquet_files\\')
+        #row[1] = row[1][index + len('Parquet_files\\'):]
         #Changin the format of the date
+        print(row[1])
         row[0] = row[0].replace('/', '-')
         #row[0] = row[0].replace(' ', '_')
         print(row[0])
@@ -270,11 +275,12 @@ def get_available_data_back(date_id0, filename0, date_id1, filename1, graph_type
         'date_id1': date_id1,
         'filename1': filename1,
                           }
-    logging.debug("This is the metadata for the graph based on what the user requested on the available_data template: %(metadata_for_graph)s")
-    print(f"date_id1 is: {date_id1}")
+    logging.debug(f"This is the metadata for the graph based on what the user requested on the available_data template: {metadata_for_graph}")
+    logging.debug("The available_data template has been accessed and now the data from the file is going to be shown on a graph")
+
     if date_id1 == 'NA':
         logging.debug("Plotting a graph for a single file")
-        df = analyser.small_df(filename = "D:\OneDrive\Coding\A-level\Airfare-flights KIWI API\Data\Parquet_files\\" + metadata_for_graph['filename0'], 
+        df = analyser.small_df(filename =metadata_for_graph['filename0'], 
                                 filter_data_bool = True,
                                 date_id=metadata_for_graph['date_id0'])
         # the function select_graph type creates the dataframe for the graph and 
@@ -286,7 +292,8 @@ def get_available_data_back(date_id0, filename0, date_id1, filename1, graph_type
                                            graph_type=graph_type, 
                                            degree=12)
     else:
-        df = analyser.small_df(filename = "D:\OneDrive\Coding\A-level\Airfare-flights KIWI API\Data\Parquet_files\\" + metadata_for_graph['filename0'], 
+        logging.debug
+        df = analyser.small_df(filename = metadata_for_graph['filename0'], 
                                 filter_data_bool = True,
                                 date_id=metadata_for_graph['date_id0'])
         json_graph1 = df.select_graph_type(method = 'quantile', 
