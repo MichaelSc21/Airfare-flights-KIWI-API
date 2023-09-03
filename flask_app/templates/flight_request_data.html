@@ -6,7 +6,7 @@
 		<div class="loading-text">Loading... This will take a minute</div>
 	</div>
 	<div class="row p-1">
-		<div class="card m-auto" style="width: 90%;">
+		<div class="card m-auto" >
 			<div class="card-body">
 				<div class="chart"></div>
 				<p class="chart">Lorem ipsum dolor sit amet consectetur adipisicing elit. 
@@ -23,39 +23,11 @@
 		</div>
 	</div>
 		
-		<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-		<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-		<!--<script type="text/javascript">
-			$(document).ready(function() {	
-				var intervalId = setInterval(function() {
-					// Send AJAX request to Flask app to check for JSON data
-					$.ajax({
-						url: '/get_result',  // replace with your Flask route for checking data
-						type: 'GET',
-						success: function(response) {
-							// If JSON data is available, handle it
-							if (response.response) {
-								clearInterval(intervalId);  // stop polling
-								document.querySelector('.loading-container').style.display = 'none';
-								//document.querySelector('.chart1').style.display = 'block';
-								//document.getElementById('result').innerHTML = data.result;
-								var graphs1 = JSON.parse(response.data);
-								var chart = document.getElementsByClassName('chart')[0];
-								// Add a css class created in the main.css to slide the items from the left
-								chart.classList.add('show')
-								document.querySelector('p.chart').classList.add('show')
-								Plotly.newPlot(chart, graphs1.data,{});
-							}
-						}
-					});
-				}, 10000);  // polling interval in milliseconds (e.g. 3000 ms = 3 seconds)
-			});
-		</script>-->
-		
-		<script type="text/javascript">
+        <script src="https://cdn.plot.ly/plotly-2.25.2.min.js" charset="utf-8"></script>
+        <script src="jquery-3.6.4.min.js"></script>
+		<script>
 			// Use Jinja syntax to get the value of the session variable 'json_graph'
 			var graphs1 = {{ session["json_graph"]|default("null") | safe}};
-			
 			// Check if session variable 'json_graph' exists
 			if (graphs1 !== null) {
 				console.log('It already has the json_graph session variable saved')
@@ -73,6 +45,7 @@
 				});
 			}	
 			async function fetchData() {
+                console.log("it is fetching the data")
 				try {
 					const response = await fetch('/get_result');
 					if (response.ok) {

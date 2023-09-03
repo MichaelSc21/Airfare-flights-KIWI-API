@@ -124,11 +124,11 @@ def flight_request():
         #print(filtered_dict)
         logging.debug("a POST request has been sent with the information for the payload for the data_getter_OOP module")
         logging.debug(f"This is the dictionary passed: \n {filtered_dict}")
-        logging.debug(f"Compare to the dictoinary of the session: \n {session['payload']}")
+        #logging.debug(f"Compare to the dictoinary of the session: \n {session['payload']}")
         
         session['payload'] = filtered_dict
 
-
+        print("It submitted the form")
         return render_template('flight_request_data.html', )
 
     return render_template('flight_request.html', form=form)
@@ -152,7 +152,10 @@ def get_result():
     'sort':'date',
     'selected_cabins': 'M',
     'limit': 1000}"""
+    print("this is the payload")
     payload = session.get('payload')
+
+    print(payload)
     getter = Data_getter(payload, 
                         sanitise_data = True, 
                         delete_data = False,)

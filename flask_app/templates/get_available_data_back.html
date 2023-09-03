@@ -28,13 +28,12 @@
 
 		<script type="text/javascript">
 			document.querySelector('.loading-container').style.display = 'none';
-			console.log('adsjghalsgh')
 			graphs1 = {{ json_graph | safe}};
 			var chart = document.getElementsByClassName('chart')[0];
 			
 			// Add a css class created in the main.css to slide the items from the left
 			chart.classList.add('show')
 			document.querySelector('p.chart').classList.add('show')
-			Plotly.newPlot(chart, graphs1.data,{});
+			Plotly.newPlot(chart, graphs1.data,graphs1.layout);
 		</script>
 	{% endblock %}
