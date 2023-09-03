@@ -16,7 +16,6 @@ from importlib import reload
 import Getting_data.API_details as API_details
 from Getting_data.data_getter_OOP import Data_getter
 reload(API_details)
-reload(API_details)
 
 #%matplotlib qt
 

@@ -41,10 +41,12 @@ class small_df:
             #self.filename = os.path.join(sys.path[0],API_details.DIR_DATA_PARQUET, self.filename)
         else:
             self.filename = filename
+            print(self.filename)
         #self.filename = os.path.join(sys.path[0],API_details.DIR_DATA_PARQUET, self.filename)
   
         self.date_id = date_id
-        if absolute_path_with_filename == None:
+        print(absolute_path_with_filename)
+        if absolute_path_with_filename is None:
             self.absolute_path_with_filename = self.create_absolute_path_with_filename(self.date_id, self.filename)
             
             print(self.absolute_path_with_filename)
@@ -135,7 +137,7 @@ class small_df:
 
         self.y = self.df['price']
         self.x = self.df.index
-        self.x_line = np.array(self.x.astype(int) / 10**9)
+        self.x_line = np.array(self.x.astype('int64') / 10**9)
         
         self.small_df_filename = self.filename[:-5] + '_small_df' + '.json'
         self.file_graph_plotly = os.path.join(API_details.DIR_GRAPH, API_details.FILE_GRAPH_PLOTLY)
@@ -436,7 +438,7 @@ class small_df:
             # Arguments don't need to be passed as they are already variable that belong to the instance
             # however, it shows the variables this function needs
             self.compare_data_small_df_plotly(other_date_df_filename=self.other_date_df_absolute_path_with_filename,
-                                              other_date_df_payload=self.other_date_df_payload)
+            other_date_df_payload=self.other_date_df_payload)
             return self.return_json()
         
         
@@ -469,10 +471,13 @@ if __name__ == '__main__':
     
     analyser = small_df(payload = payload, 
                         filter_data_bool = True, 
-                        date_start = '01/04/2023', date_end = '16/05/2023')
-    analyser.create_small_df(method = 'quantile', quantile = 0.3)
-    analyser.compare_data_small_df_plotly('LTN_to_IAS_round_01-04-2023_to_31-12-2023.parquet')
-    checking_df = analyser.df
+                        date_start = '01/04/2023', date_end = '16/05/2023',
+                        filename="BHX_to_FUE_round_04-09-2023_to_31-12-2023.parquet",
+                        absolute_path_with_filename= "D:\OneDrive\Coding\A-level\Airfare-flights KIWI API\Data\Parquet_files\\03-09-2023 10_00\BHX_to_FUE_round_04-09-2023_to_31-12-2023.parquet")
+    analyser.create_small_df(method = 'quantile', quantile = 0.3,
+                            )
+    #analyser.compare_data_small_df_plotly('LTN_to_IAS_round_01-04-2023_to_31-12-2023.parquet')
+    #checking_df = analyser.df
     
 
 # %%
