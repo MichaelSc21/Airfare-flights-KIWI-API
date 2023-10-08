@@ -15,7 +15,7 @@ import sqlite3
 
 from importlib import reload
 
-import Getting_data.API_details as API_details
+import  API_details
 #from Getting_data.data_getter_OOP import Data_getter
 reload(API_details)
 
@@ -182,8 +182,8 @@ class small_df:
     
     def plot_graph_fourier(self, ax= None, a=1, b=0, colour='blue'):
         if ax == None:
-            fig, ax = plt.subplots(figzie = (12, 6))
-        ax.plot(self.x_dense,self.y_dense*a+b, label = df_name, color = colour)
+            fig, ax = plt.subplots(figsize = (12, 6))
+        ax.plot(self.x_dense,self.y_dense*a+b, label = "Fourier", color = colour)
         ax.scatter(self.x, self.y, color = colour, marker='.',label = self.filename)
         ax.legend(fontsize=12)
         ax.set_title('Price of flights in the bottom 15% for 4 adults')
@@ -474,8 +474,10 @@ if __name__ == '__main__':
                         date_start = '01/04/2023', date_end = '16/05/2023',
                         filename="BHX_to_FUE_round_04-09-2023_to_31-12-2023.parquet",
                         absolute_path_with_filename= "D:\OneDrive\Coding\A-level\Airfare-flights KIWI API\Data\Parquet_files\\03-09-2023 10_00\BHX_to_FUE_round_04-09-2023_to_31-12-2023.parquet")
-    analyser.create_small_df(method = 'quantile', quantile = 0.3,
-                            )
+    analyser.create_small_df(method = 'quantile', quantile = 0.3,)
+    analyser.est_param_fourier()
+    analyser.model_based_on_param_fourier(degree=30)
+    analyser.plot_graph_fourier(a=0.15)
     #analyser.compare_data_small_df_plotly('LTN_to_IAS_round_01-04-2023_to_31-12-2023.parquet')
     #checking_df = analyser.df
     
